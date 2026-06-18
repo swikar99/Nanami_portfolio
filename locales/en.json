@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "work": "Work",
+    "media": "Media",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hello, I'm",
+    "name": "Nanami Wakayam",
+    "title": "Entrepreneur, Model & Social Impact Leader",
+    "subtitle": "Building bridges between Japan and Nepal through sustainable agriculture and ethical business",
+    "cta": "Explore My Journey"
+  },
+  "about": {
+    "title": "About Me",
+    "description": "Former model turned social entrepreneur, I survived the 2015 Nepal earthquake while climbing Everest and transformed that experience into a mission to create positive change. Through Our Farms, I'm pioneering sustainable strawberry cultivation in Nepal, empowering local communities, and building ethical supply chains.",
+    "highlight1": "Founder of Our Farms & HIMEBERRY",
+    "highlight2": "Ethical Fashion Advocate (SEPLUMO)",
+    "highlight3": "Cross-Cultural Bridge Builder"
+  },
+  "work": {
+    "title": "My Work",
+    "himeberry": {
+      "title": "HIMEBERRY",
+      "description": "Premium strawberry cultivation in Nepal, creating sustainable livelihoods"
+    },
+    "ourFarms": {
+      "title": "Our Farms",
+      "description": "Social enterprise connecting farmers to global markets"
+    },
+    "seplumo": {
+      "title": "SEPLUMO",
+      "description": "Ethical select shop promoting sustainable fashion"
+    },
+    "enwa": {
+      "title": "ENWA TOKYO",
+      "description": "Cultural exchange and business development"
+    },
+    "jobmatchy": {
+      "title": "JOBMATCHY",
+      "description": "Employment opportunities for international talent in Japan"
+    },
+    "lernado": {
+      "title": "Lernado School",
+      "description": "Educational platform fostering global learning and development"
+    },
+    "xzvklvxlz": {
+      "title": "xzvxvxcvx",
+      "description": "xzvxzvxczcvxcvxvx"
+    }
+  },
+  "media": {
+    "title": "Media & Talks",
+    "subtitle": "Media appearances, interviews, and featured articles",
+    "featured": "Featured In",
+    "speeches": "Speeches & Interviews",
+    "videos": "Videos",
+    "tedx": "TEDx Talk - Social Entrepreneurship",
+    "nepalEarthquake": "Nepal Earthquake Survival Story",
+    "seplumo2019": "SEPLUMO - Art of Life Interview 2019",
+    "himeberryDelicious": "HIMEBERRY - Delicious Japan Feature",
+    "focusOn": "The Focus On - Nanami Wakayama Profile",
+    "businessInsider": "Business Insider Japan Feature",
+    "harajuku": "Harajuku Omotesando Feature",
+    "erisSelect": "ERIS Select - SEPLUMO Interview",
+    "awlf": "Asia Women Leaders Forum",
+    "facebookCommunity": "Facebook Community - Our Farms Nepal"
+  },
+  "contact": {
+    "title": "Get In Touch",
+    "description": "Let's connect and create positive change together",
+    "social": "Follow My Journey",
+    "cta": "Looking forward to connecting with you!"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "mission": "Building a sustainable future through ethical business and cross-cultural collaboration"
+  }
+}
