@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { useInView } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
-import { Video, FileText, Mic, Play } from 'lucide-react';
+import { Video, FileText, Mic } from 'lucide-react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -14,18 +14,14 @@ import 'swiper/css/pagination';
 
 function VideoCard({ video, index, isInView, t }: any) {
   const [imageError, setImageError] = useState(false);
-  const [useYouTubeThumbnail, setUseYouTubeThumbnail] = useState(false);
-  // Initialize with a default image path to avoid empty src error
   const [imgSrc, setImgSrc] = useState(video.imageUrl || `/images/media/${video.imageName}.jpg`);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
     return match ? match[1] : null;
   };
 
-  // Add timestamp on client-side only to bust cache
   useEffect(() => {
     if (!video.imageUrl) {
       setImgSrc(`/images/media/${video.imageName}.jpg?t=${Date.now()}`);
@@ -41,32 +37,27 @@ function VideoCard({ video, index, isInView, t }: any) {
       animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : { opacity: 0, y: 30, rotateX: -10 }}
       transition={{ duration: 0.6, delay: index * 0.2 }}
       whileHover={{ scale: 1.02, y: -12 }}
-      className="group relative aspect-video rounded-3xl overflow-hidden cursor-pointer shadow-2xl"
+      className="group relative aspect-video rounded-3xl overflow-hidden cursor-pointer shadow-xl"
     >
-      {/* Glow Effect on Hover */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
 
-      <div className="relative h-full w-full rounded-3xl overflow-hidden bg-gray-900">
+      <div className="relative h-full w-full rounded-3xl overflow-hidden bg-gray-100">
         {!imageError && imgSrc ? (
           <>
-            {/* Loading Skeleton */}
             {isLoading && (
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 dark:from-purple-900 dark:via-pink-900 dark:to-blue-900 animate-pulse z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 animate-pulse z-10" />
             )}
-            {/* Video Thumbnail Image */}
             <Image
               src={imgSrc}
               alt={t(video.key)}
               fill
-              className={`object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110 ${isLoading ? 'scale-110 blur-xl grayscale' : 'scale-100 blur-0 grayscale-0'
-                }`}
+              className={`object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110 ${isLoading ? 'scale-110 blur-xl grayscale' : 'scale-100 blur-0 grayscale-0'}`}
               sizes="(max-width: 768px) 100vw, 50vw"
               onLoad={() => setIsLoading(false)}
               onError={() => {
                 const timestamp = Date.now();
                 const videoId = getYouTubeVideoId(video.url);
 
-                // Try different image extensions
                 if (imgSrc.includes('.jpg') && !imgSrc.includes('youtube')) {
                   setImgSrc(`/images/media/${video.imageName}.png?t=${timestamp}`);
                   setIsLoading(true);
@@ -77,9 +68,7 @@ function VideoCard({ video, index, isInView, t }: any) {
                   setImgSrc(`/images/media/${video.imageName}.webp?t=${timestamp}`);
                   setIsLoading(true);
                 } else if (imgSrc.includes('.webp') && videoId) {
-                  // Fallback to YouTube thumbnail
                   setImgSrc(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
-                  setUseYouTubeThumbnail(true);
                   setIsLoading(true);
                 } else {
                   setImageError(true);
@@ -88,23 +77,11 @@ function VideoCard({ video, index, isInView, t }: any) {
               unoptimized
               suppressHydrationWarning
             />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           </>
         ) : (
-          /* Fallback: Logo + Emoji */
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 animate-gradient-shift" />
-            <Image
-              src="/images/nav/logo.png"
-              alt="Logo"
-              fill
-              className="object-contain p-12 opacity-20"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200" />
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
                 className="text-9xl drop-shadow-2xl"
@@ -118,7 +95,7 @@ function VideoCard({ video, index, isInView, t }: any) {
         )}
 
         {/* Play Button Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-pink-900/80 to-blue-900/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center backdrop-blur-md">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/70 via-pink-600/70 to-blue-600/70 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             whileHover={{ scale: 1.1 }}
@@ -127,7 +104,7 @@ function VideoCard({ video, index, isInView, t }: any) {
           >
             <div className="relative">
               <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl animate-pulse" />
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-6 border-2 border-white/40">
+              <div className="relative bg-white/20 backdrop-blur-sm rounded-full p-6 border-2 border-white/40">
                 <Video className="w-12 h-12 text-white drop-shadow-lg" />
               </div>
             </div>
@@ -135,8 +112,8 @@ function VideoCard({ video, index, isInView, t }: any) {
           </motion.div>
         </div>
 
-        {/* Title with Enhanced Styling */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
+        {/* Title */}
+        <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
           <motion.div
             initial={{ x: -10, opacity: 0.8 }}
             whileHover={{ x: 0, opacity: 1 }}
@@ -158,11 +135,9 @@ function VideoCard({ video, index, isInView, t }: any) {
 
 function ArticleCard({ article, index, isInView, t }: any) {
   const [imageError, setImageError] = useState(false);
-  // Initialize without timestamp to avoid hydration mismatch
   const [imgSrc, setImgSrc] = useState(article.imageUrl || `/images/media/${article.imageName}.jpg`);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Add timestamp on client-side only to bust cache
   useEffect(() => {
     if (!article.imageUrl) {
       setImgSrc(`/images/media/${article.imageName}.jpg?t=${Date.now()}`);
@@ -178,29 +153,25 @@ function ArticleCard({ article, index, isInView, t }: any) {
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }}
       transition={{ duration: 0.5, delay: index * 0.08 + 0.4 }}
       whileHover={{ scale: 1.03, y: -8 }}
-      className="group relative rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 bg-white dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:border-purple-400 dark:hover:border-purple-600"
+      className="group relative rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 bg-white border border-gray-200 hover:border-purple-400"
     >
-      {/* Gradient Border Glow on Hover */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-2xl opacity-0 group-hover:opacity-30 blur transition-all duration-500" />
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-2xl opacity-0 group-hover:opacity-30 blur transition-all duration-500" />
 
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden h-full">
+      <div className="relative bg-white rounded-2xl overflow-hidden h-full">
         {!imageError && imgSrc ? (
           <>
-            {/* Article Thumbnail */}
-            <div className="relative h-40 overflow-hidden bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20">
+            <div className="relative h-40 overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
               {isLoading && (
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 dark:from-purple-900/40 dark:via-pink-900/40 dark:to-blue-900/40 animate-pulse z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 animate-pulse z-10" />
               )}
               <Image
                 src={imgSrc}
                 alt={t(article.key)}
                 fill
-                className={`object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105 ${isLoading ? 'scale-110 blur-xl grayscale' : 'scale-100 blur-0 grayscale-0'
-                  }`}
+                className={`object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-105 ${isLoading ? 'scale-110 blur-xl grayscale' : 'scale-100 blur-0 grayscale-0'}`}
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                 onLoad={() => setIsLoading(false)}
                 onError={() => {
-                  // Try different image extensions in order: jpg -> png -> jpeg -> webp
                   const timestamp = Date.now();
                   if (imgSrc.includes('.jpg')) {
                     setImgSrc(`/images/media/${article.imageName}.png?t=${timestamp}`);
@@ -218,13 +189,11 @@ function ArticleCard({ article, index, isInView, t }: any) {
                 unoptimized
                 suppressHydrationWarning
               />
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
 
-              {/* Icon Badge */}
-              <div className="absolute top-3 right-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <motion.div
-                  className="text-purple-600 dark:text-purple-400"
+                  className="text-purple-600"
                   whileHover={{ rotate: 360 }}
                   transition={{ duration: 0.6 }}
                 >
@@ -233,20 +202,18 @@ function ArticleCard({ article, index, isInView, t }: any) {
               </div>
             </div>
 
-            {/* Text Content */}
             <div className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full group-hover:w-12 transition-all duration-300" />
-                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Article
                 </span>
               </div>
-              <h4 className="font-bold text-sm line-clamp-3 text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300 leading-relaxed" suppressHydrationWarning>
+              <h4 className="font-bold text-sm line-clamp-3 text-gray-900 group-hover:text-purple-600 transition-colors duration-300 leading-relaxed" suppressHydrationWarning>
                 {t(article.key)}
               </h4>
 
-              {/* Read More Indicator */}
-              <div className="mt-4 flex items-center gap-2 text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
+              <div className="mt-4 flex items-center gap-2 text-purple-600 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
                 <span className="text-xs font-semibold">Read More</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -255,27 +222,16 @@ function ArticleCard({ article, index, isInView, t }: any) {
             </div>
           </>
         ) : (
-          /* Fallback: Logo + Icon Display */
-          <div className="p-6 h-full flex flex-col justify-center items-center text-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900/10 dark:via-pink-900/10 dark:to-blue-900/10 relative">
-            <Image
-              src="/images/nav/logo.png"
-              alt="Logo"
-              fill
-              className="object-contain p-8 opacity-10"
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+          <div className="p-6 h-full flex flex-col justify-center items-center text-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative">
             <motion.div
-              className="mb-4 p-4 rounded-full bg-white dark:bg-gray-800 shadow-lg text-purple-500 dark:text-purple-400 relative z-10"
+              className="mb-4 p-4 rounded-full bg-white shadow-lg text-purple-500 relative z-10"
               whileHover={{ rotate: 360, scale: 1.2 }}
               transition={{ duration: 0.6 }}
             >
               {article.icon}
             </motion.div>
             <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-3 relative z-10" />
-            <h4 className="font-bold text-sm line-clamp-4 text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors leading-relaxed relative z-10" suppressHydrationWarning>
+            <h4 className="font-bold text-sm line-clamp-4 text-gray-900 group-hover:text-purple-600 transition-colors leading-relaxed relative z-10" suppressHydrationWarning>
               {t(article.key)}
             </h4>
           </div>
@@ -367,14 +323,10 @@ export function MediaSection() {
   ];
 
   return (
-    <section id="media" className="relative py-32 overflow-hidden" ref={ref}>
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-950/20 dark:to-gray-900" />
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.05]" />
-
+    <section id="media" className="relative py-32 overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50" ref={ref}>
       {/* Floating Orbs */}
       <motion.div
-        className="absolute top-20 left-10 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl"
+        className="absolute top-20 left-10 w-64 h-64 bg-purple-200/30 rounded-full blur-3xl"
         animate={{
           x: [0, 50, 0],
           y: [0, 30, 0],
@@ -383,7 +335,7 @@ export function MediaSection() {
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-20 right-10 w-80 h-80 bg-pink-400/10 rounded-full blur-3xl"
+        className="absolute bottom-20 right-10 w-80 h-80 bg-pink-200/30 rounded-full blur-3xl"
         animate={{
           x: [0, -40, 0],
           y: [0, -50, 0],
@@ -401,9 +353,9 @@ export function MediaSection() {
             transition={{ duration: 0.6 }}
             className="inline-block"
           >
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-md mb-6 border border-purple-300 dark:border-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <Video className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/80 backdrop-blur-md mb-6 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Video className="w-5 h-5 text-purple-600" />
+              <span className="text-sm font-bold text-purple-700 uppercase tracking-wider">
                 Featured In
               </span>
             </div>
@@ -413,7 +365,7 @@ export function MediaSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 dark:from-purple-400 dark:via-pink-400 dark:to-blue-400 bg-clip-text text-transparent"
+            className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent"
           >
             {t('title')}
           </motion.h2>
@@ -422,7 +374,7 @@ export function MediaSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+            className="text-lg text-gray-600 max-w-2xl mx-auto"
           >
             {t('subtitle')}
           </motion.p>
@@ -436,16 +388,15 @@ export function MediaSection() {
           className="mb-24"
         >
           <div className="flex items-center gap-4 mb-10">
-            <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
-              <Video className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+            <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white shadow-lg border border-gray-100">
+              <Video className="w-6 h-6 text-purple-600" />
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 {t('videos')}
               </h3>
             </div>
-            <div className="flex-1 h-px bg-gradient-to-r from-purple-200 via-pink-200 to-transparent dark:from-purple-800 dark:via-pink-800" />
+            <div className="flex-1 h-px bg-gradient-to-r from-purple-200 via-pink-200 to-transparent" />
           </div>
 
-          {/* Desktop Grid / Mobile Slider */}
           {isMobile ? (
             <div className="md:hidden">
               <Swiper
@@ -491,16 +442,15 @@ export function MediaSection() {
           transition={{ duration: 0.7, delay: 0.5 }}
         >
           <div className="flex items-center gap-4 mb-10">
-            <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
-              <FileText className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent">
+            <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white shadow-lg border border-gray-100">
+              <FileText className="w-6 h-6 text-pink-600" />
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 {t('featured')}
               </h3>
             </div>
-            <div className="flex-1 h-px bg-gradient-to-r from-pink-200 via-purple-200 to-transparent dark:from-pink-800 dark:via-purple-800" />
+            <div className="flex-1 h-px bg-gradient-to-r from-pink-200 via-purple-200 to-transparent" />
           </div>
 
-          {/* Desktop Grid / Mobile Slider */}
           {isMobile ? (
             <div className="md:hidden">
               <Swiper

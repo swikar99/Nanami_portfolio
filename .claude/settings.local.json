@@ -16,7 +16,10 @@
       "Bash(NODE_OPTIONS='--no-warnings' npx next:*)",
       "Bash(tree:*)",
       "Bash(timeout 30 npm run build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
