@@ -42,7 +42,6 @@ export function LanguageSwitcher() {
         segments.splice(1, 0, nextLocale);
       }
 
-      // Fix for root path resulting in double slash (e.g., /ja/) which can break routing
       if (segments.length === 3 && segments[2] === '') {
         segments.pop();
       }
@@ -58,7 +57,7 @@ export function LanguageSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors border border-purple-200"
       >
         <span className="text-lg">{currentLanguage.flag}</span>
         <span className="font-medium text-sm">{currentLanguage.label}</span>
@@ -66,13 +65,14 @@ export function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden z-50 py-1">
+        <div className="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-lg border border-purple-100 overflow-hidden z-50 py-1">
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => onSelect(lang.code)}
-              className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${locale === lang.code ? 'bg-gray-50 dark:bg-gray-700 font-medium' : ''
-                }`}
+              className={`w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-purple-50 transition-colors ${
+                locale === lang.code ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
+              }`}
             >
               <span className="text-lg">{lang.flag}</span>
               <span>{lang.label}</span>
