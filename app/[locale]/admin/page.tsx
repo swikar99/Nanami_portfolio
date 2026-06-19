@@ -8,11 +8,25 @@ import MediaCrudManager from '@/components/admin/MediaCrudManager';
 import SectionCrudManager from '@/components/admin/SectionCrudManager';
 import LogoManager from '@/components/admin/LogoManager';
 
-type LocaleData = {
-  [key: string]: any;
-};
+type ViewMode =
+  | 'nav-crud' | 'hero-crud' | 'about-crud' | 'work-crud'
+  | 'media-crud' | 'contact-crud' | 'footer-crud' | 'logo-crud';
 
-type ViewMode = 'nav-crud' | 'hero-crud' | 'about-crud' | 'work-crud' | 'media-crud' | 'contact-crud' | 'footer-crud' | 'logo-crud';
+const NAV_ITEMS: { mode: ViewMode; icon: string; label: string }[] = [
+  { mode: 'nav-crud',     icon: '🧭', label: 'Navigation'  },
+  { mode: 'hero-crud',    icon: '⭐', label: 'Hero'         },
+  { mode: 'about-crud',   icon: '👤', label: 'About'        },
+  { mode: 'work-crud',    icon: '💼', label: 'Work'         },
+  { mode: 'media-crud',   icon: '📺', label: 'Media'        },
+  { mode: 'contact-crud', icon: '📧', label: 'Contact'      },
+  { mode: 'footer-crud',  icon: '📄', label: 'Footer'       },
+];
+
+const LOCALES = [
+  { code: 'en', name: 'English',  flag: '🇬🇧' },
+  { code: 'ja', name: '日本語',   flag: '🇯🇵' },
+  { code: 'ne', name: 'नेपाली',  flag: '🇳🇵' },
+];
 
 export default function AdminPanel() {
   const params = useParams();
@@ -20,65 +34,54 @@ export default function AdminPanel() {
   const { data: session, status } = useSession();
 
   const password = 'admin123';
-  const [adminEmail, setAdminEmail] = useState('');
+  const [adminEmail, setAdminEmail]       = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [selectedLocale, setSelectedLocale] = useState('en');
-  const [localeData, setLocaleData] = useState<LocaleData>({});
-  const [editedData, setEditedData] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [message, setMessage]   = useState('');
+  const [error, setError]       = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('nav-crud');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const locales = [
-    { code: 'en', name: 'English', flag: '🇬🇧', color: 'blue' },
-    { code: 'ja', name: '日本語', flag: '🇯🇵', color: 'red' },
-    { code: 'ne', name: 'नेपाली', flag: '🇳🇵', color: 'green' }
-  ];
-
-  // Load locale data
+  // Open sidebar by default on desktop, closed on mobile
   useEffect(() => {
-    if (session) {
-      loadLocale(selectedLocale);
-    }
-  }, [selectedLocale, session]);
+    const mql = window.matchMedia('(min-width: 768px)');
+    setSidebarOpen(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setSidebarOpen(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
-  const loadLocale = async (locale: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await fetch(`/api/admin/locales?locale=${locale}`);
-      if (!response.ok) throw new Error('Failed to load locale');
-      const data = await response.json();
-      setLocaleData(data.content);
-      setEditedData(JSON.stringify(data.content, null, 2));
-    } catch (err) {
-      setError('Failed to load locale data');
-    } finally {
-      setLoading(false);
-    }
+  const navigate = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  };
+
+  const showSuccess = (msg: string) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(''), 5000);
+  };
+  const showError = (err: string) => {
+    setError(err);
+    setTimeout(() => setError(''), 5000);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const result = await signIn('credentials', {
         email: adminEmail,
         password: loginPassword,
         redirect: false,
       });
-
       if (result?.error) {
         setError('Invalid email or password');
-      } else if (result?.ok) {
-        // Session will be automatically loaded
-        setLoginPassword(''); // Clear login password from state for security
+      } else {
+        setLoginPassword('');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred during login');
     } finally {
       setLoading(false);
@@ -91,186 +94,54 @@ export default function AdminPanel() {
     setAdminEmail('');
   };
 
-  const handleSave = async () => {
-    setLoading(true);
-    setError('');
-    setMessage('');
-
-    try {
-      const parsedData = JSON.parse(editedData);
-
-      const response = await fetch('/api/admin/locales', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          locale: selectedLocale,
-          content: parsedData,
-          password: password,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthorized - Invalid password. Please use: admin123');
-        }
-        throw new Error(result.error || 'Failed to save');
-      }
-
-      setMessage(`✅ Successfully saved ${selectedLocale}.json`);
-      setLocaleData(parsedData);
-
-      setTimeout(() => {
-        setMessage('');
-      }, 5000);
-    } catch (err) {
-      setError(`Error: ${(err as Error).message}`);
-      setTimeout(() => setError(''), 5000);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setEditedData(JSON.stringify(localeData, null, 2));
-    setError('');
-    setMessage('');
-  };
-
-  const countTranslations = (obj: any): number => {
-    let count = 0;
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        count += countTranslations(obj[key]);
-      } else {
-        count++;
-      }
-    }
-    return count;
-  };
-
-  const renderField = (key: string, value: any, path: string = '', depth: number = 0) => {
-    const fullPath = path ? `${path}.${key}` : key;
-
-    if (typeof value === 'object' && value !== null) {
-      return (
-        <div key={fullPath} className={`mb-4 ${depth > 0 ? 'ml-4 pl-4 border-l-2 border-gray-200' : ''}`}>
-          <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
-            depth === 0 ? 'text-xl text-gray-900' : 'text-base text-gray-700'
-          }`}>
-            <span className="text-purple-600">📁</span>
-            {key}
-          </h3>
-          <div className="space-y-2">
-            {Object.entries(value).map(([k, v]) => renderField(k, v, fullPath, depth + 1))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div key={fullPath} className="mb-3 group">
-        <label className="block text-sm font-medium text-gray-600 mb-1.5 flex items-center gap-2">
-          <span className="text-gray-400">•</span>
-          <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">{fullPath}</span>
-        </label>
-        <textarea
-          value={value}
-          onChange={(e) => {
-            try {
-              const newData = JSON.parse(editedData);
-              const keys = fullPath.split('.');
-              let obj = newData;
-              for (let i = 0; i < keys.length - 1; i++) {
-                obj = obj[keys[i]];
-              }
-              obj[keys[keys.length - 1]] = e.target.value;
-              const updatedJson = JSON.stringify(newData, null, 2);
-              setEditedData(updatedJson);
-              setLocaleData(newData);
-            } catch (err) {
-              // If JSON parsing fails, just update the value directly
-              console.error('Failed to parse JSON:', err);
-            }
-          }}
-          rows={Math.min(Math.ceil(String(value).length / 60), 4)}
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white group-hover:border-gray-300 resize-none"
-        />
-      </div>
-    );
-  };
-
-  const getSectionIcon = (section: string) => {
-    const icons: { [key: string]: string } = {
-      nav: '🧭',
-      hero: '⭐',
-      about: '👤',
-      work: '💼',
-      media: '📺',
-      contact: '📧',
-      footer: '📄'
-    };
-    return icons[section] || '📝';
-  };
-
-  // Show loading state while checking authentication
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto mb-4" />
           <p className="text-lg">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Show login form if not authenticated
+  // ── Login ────────────────────────────────────────────────────────────────
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bS0yIDB2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yem0wIDR2Mmgydi0yaC0yeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30"></div>
-        <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl mb-4 shadow-lg">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl mb-4 shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Admin Portal
-            </h1>
-            <p className="text-gray-500">Translation Management System</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Admin Portal</h1>
+            <p className="text-sm text-gray-500">Translation Management System</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
               <input
                 type="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
                 autoFocus
                 required
                 disabled={loading}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Admin Password *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <input
                 type="password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-base"
                 required
                 disabled={loading}
               />
@@ -278,7 +149,7 @@ export default function AdminPanel() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3.5 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3.5 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing In...' : 'Sign In'}
             </button>
@@ -293,415 +164,244 @@ export default function AdminPanel() {
     );
   }
 
+  // ── Authenticated layout ─────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex overflow-hidden">
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 flex flex-col shadow-2xl`}>
-        {/* Logo */}
-        <div className="p-6 border-b border-slate-700">
+      <aside
+        className={`
+          fixed md:relative inset-y-0 left-0 z-50 flex-shrink-0 h-full
+          bg-gradient-to-b from-slate-900 to-slate-800 text-white
+          transition-all duration-300 flex flex-col shadow-2xl
+          ${sidebarOpen
+            ? 'w-64 translate-x-0'
+            : 'w-64 -translate-x-full md:translate-x-0 md:w-20'}
+        `}
+      >
+        {/* Sidebar logo */}
+        <div className="p-4 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
               </svg>
             </div>
             {sidebarOpen && (
-              <div>
-                <h2 className="font-bold text-lg">Admin Portal</h2>
+              <div className="min-w-0">
+                <h2 className="font-bold text-base leading-tight">Admin Portal</h2>
                 <p className="text-xs text-gray-400">Translation CMS</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {/* Nav items */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {sidebarOpen && (
-            <>
-              <div className="pb-2 px-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Content Sections</p>
-              </div>
-
-              <button
-                onClick={() => setViewMode('nav-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'nav-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">🧭</span>
-                <span>Navigation</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('hero-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'hero-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">⭐</span>
-                <span>Hero Section</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('about-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'about-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">👤</span>
-                <span>About Section</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('work-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'work-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">💼</span>
-                <span>Work/Projects</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('media-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'media-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">📺</span>
-                <span>Media</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('contact-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'contact-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">📧</span>
-                <span>Contact</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('footer-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'footer-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">📄</span>
-                <span>Footer</span>
-              </button>
-
-              <div className="pt-6 pb-2 px-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Other Tools</p>
-              </div>
-
-              <button
-                onClick={() => setViewMode('logo-crud')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${
-                  viewMode === 'logo-crud'
-                    ? 'bg-slate-700/70 text-white'
-                    : 'text-gray-300 hover:bg-slate-700/30'
-                }`}
-              >
-                <span className="text-lg">🎨</span>
-                <span>Logo Manager</span>
-              </button>
-
-            </>
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold px-3 pb-2">
+              Content
+            </p>
           )}
+
+          {NAV_ITEMS.map(({ mode, icon, label }) => (
+            <button
+              key={mode}
+              onClick={() => navigate(mode)}
+              title={!sidebarOpen ? label : undefined}
+              className={`
+                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm
+                ${viewMode === mode ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}
+                ${!sidebarOpen ? 'justify-center' : ''}
+              `}
+            >
+              <span className="text-lg flex-shrink-0">{icon}</span>
+              {sidebarOpen && <span>{label}</span>}
+            </button>
+          ))}
+
+          <div className={sidebarOpen ? 'pt-4 pb-1' : 'py-3'}>
+            {sidebarOpen && (
+              <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold px-3">
+                Tools
+              </p>
+            )}
+          </div>
+
+          <button
+            onClick={() => navigate('logo-crud')}
+            title={!sidebarOpen ? 'Logo' : undefined}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm
+              ${viewMode === 'logo-crud' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}
+              ${!sidebarOpen ? 'justify-center' : ''}
+            `}
+          >
+            <span className="text-lg flex-shrink-0">🎨</span>
+            {sidebarOpen && <span>Logo Manager</span>}
+          </button>
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-700">
+        {/* Collapse toggle — desktop only */}
+        <div className="p-3 border-t border-slate-700 flex-shrink-0 hidden md:block">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700/50 transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-all"
           >
-            <svg className={`w-5 h-5 flex-shrink-0 transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className={`w-5 h-5 flex-shrink-0 transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
-            {sidebarOpen && <span>Collapse</span>}
+            {sidebarOpen && <span className="text-sm">Collapse</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Translation Manager</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Manage multilingual content for your portfolio</p>
+      {/* Main */}
+      <main className="flex-1 overflow-auto min-w-0 flex flex-col">
+
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm flex-shrink-0">
+          <div className="px-4 md:px-6 py-3 flex items-center gap-3">
+
+            {/* Hamburger — mobile */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 -ml-1 rounded-lg hover:bg-gray-100 flex-shrink-0"
+              aria-label="Open menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Title */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base md:text-xl font-bold text-gray-900 truncate">
+                Translation Manager
+              </h1>
+              <p className="hidden md:block text-xs text-gray-500">
+                Manage multilingual portfolio content
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Language Selector */}
-              <div className="flex gap-2">
-                {locales.map((locale) => (
-                  <button
-                    key={locale.code}
-                    onClick={() => setSelectedLocale(locale.code)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
-                      selectedLocale === locale.code
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span className="text-xl">{locale.flag}</span>
-                    {selectedLocale === locale.code && <span className="text-sm">{locale.name}</span>}
-                  </button>
-                ))}
-              </div>
-              <a
-                href={`/${currentLocale}`}
-                target="_blank"
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                <span>Preview Site</span>
-              </a>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
+
+            {/* Language switcher */}
+            <div className="flex gap-1 flex-shrink-0">
+              {LOCALES.map((locale) => (
+                <button
+                  key={locale.code}
+                  onClick={() => setSelectedLocale(locale.code)}
+                  title={locale.name}
+                  className={`
+                    flex items-center gap-1 px-2 py-1.5 rounded-lg font-medium transition-all text-sm
+                    ${selectedLocale === locale.code
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                  `}
+                >
+                  <span className="text-base leading-none">{locale.flag}</span>
+                  {selectedLocale === locale.code && (
+                    <span className="hidden sm:inline text-xs">{locale.name}</span>
+                  )}
+                </button>
+              ))}
             </div>
+
+            {/* Preview */}
+            <a
+              href={`/${currentLocale}`}
+              target="_blank"
+              className="p-2 md:px-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span className="hidden md:inline text-sm">Preview</span>
+            </a>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="p-2 md:px-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="hidden md:inline text-sm">Logout</span>
+            </button>
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="p-8">
-          {/* Nav CRUD View */}
+        {/* Content */}
+        <div className="p-4 md:p-6 flex-1">
+
           {viewMode === 'nav-crud' && (
-            <SectionCrudManager
-              locale={selectedLocale}
-              password={password}
-              section="nav"
-              sectionTitle="Navigation Menu"
-              sectionIcon="🧭"
-              description="Manage navigation menu items like Home, About, Work, Media, Contact, etc."
-              onSuccess={(msg) => {
-                setMessage(msg);
-                setTimeout(() => setMessage(''), 5000);
-              }}
-              onError={(err) => {
-                setError(err);
-                setTimeout(() => setError(''), 5000);
-              }}
-            />
+            <SectionCrudManager locale={selectedLocale} password={password} section="nav"
+              sectionTitle="Navigation Menu" sectionIcon="🧭"
+              description="Manage navigation menu items."
+              onSuccess={showSuccess} onError={showError} />
           )}
-
-          {/* Hero CRUD View */}
           {viewMode === 'hero-crud' && (
-            <SectionCrudManager
-              locale={selectedLocale}
-              password={password}
-              section="hero"
-              sectionTitle="Hero Section"
-              sectionIcon="⭐"
-              description="Manage hero/landing section content including greeting, name, title, subtitle, and CTA button text."
-              onSuccess={(msg) => {
-                setMessage(msg);
-                setTimeout(() => setMessage(''), 5000);
-              }}
-              onError={(err) => {
-                setError(err);
-                setTimeout(() => setError(''), 5000);
-              }}
-            />
+            <SectionCrudManager locale={selectedLocale} password={password} section="hero"
+              sectionTitle="Hero Section" sectionIcon="⭐"
+              description="Manage hero section content including greeting, name, title, and CTA."
+              onSuccess={showSuccess} onError={showError} />
           )}
-
-          {/* About CRUD View */}
           {viewMode === 'about-crud' && (
-            <SectionCrudManager
-              locale={selectedLocale}
-              password={password}
-              section="about"
-              sectionTitle="About Section"
-              sectionIcon="👤"
-              description="Manage about section content including title, description, and highlight points."
-              onSuccess={(msg) => {
-                setMessage(msg);
-                setTimeout(() => setMessage(''), 5000);
-              }}
-              onError={(err) => {
-                setError(err);
-                setTimeout(() => setError(''), 5000);
-              }}
-            />
+            <SectionCrudManager locale={selectedLocale} password={password} section="about"
+              sectionTitle="About Section" sectionIcon="👤"
+              description="Manage about section content including title, description, and highlights."
+              onSuccess={showSuccess} onError={showError} />
           )}
-
-          {/* Contact CRUD View */}
           {viewMode === 'contact-crud' && (
-            <SectionCrudManager
-              locale={selectedLocale}
-              password={password}
-              section="contact"
-              sectionTitle="Contact Section"
-              sectionIcon="📧"
-              description="Manage contact page content including title, description, and social media labels."
-              onSuccess={(msg) => {
-                setMessage(msg);
-                setTimeout(() => setMessage(''), 5000);
-              }}
-              onError={(err) => {
-                setError(err);
-                setTimeout(() => setError(''), 5000);
-              }}
-            />
+            <SectionCrudManager locale={selectedLocale} password={password} section="contact"
+              sectionTitle="Contact Section" sectionIcon="📧"
+              description="Manage contact page content."
+              onSuccess={showSuccess} onError={showError} />
           )}
-
-          {/* Footer CRUD View */}
           {viewMode === 'footer-crud' && (
-            <SectionCrudManager
-              locale={selectedLocale}
-              password={password}
-              section="footer"
-              sectionTitle="Footer Section"
-              sectionIcon="📄"
-              description="Manage footer content including copyright notice and mission statement."
-              onSuccess={(msg) => {
-                setMessage(msg);
-                setTimeout(() => setMessage(''), 5000);
-              }}
-              onError={(err) => {
-                setError(err);
-                setTimeout(() => setError(''), 5000);
-              }}
-            />
+            <SectionCrudManager locale={selectedLocale} password={password} section="footer"
+              sectionTitle="Footer Section" sectionIcon="📄"
+              description="Manage footer content."
+              onSuccess={showSuccess} onError={showError} />
           )}
 
-          {/* Logo CRUD View */}
-          {viewMode === 'logo-crud' && (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl">🎨</div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Logo Manager</h2>
-                    <p className="text-sm text-gray-700 mb-2">
-                      Upload, preview, and manage your website logo.
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      The logo will be saved to the public directory and can be accessed site-wide.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <LogoManager
-                password={password}
-                onSuccess={(msg) => {
-                  setMessage(msg);
-                  setTimeout(() => setMessage(''), 5000);
-                }}
-                onError={(err) => {
-                  setError(err);
-                  setTimeout(() => setError(''), 5000);
-                }}
-              />
-            </div>
-          )}
-
-          {/* Work CRUD View */}
           {viewMode === 'work-crud' && (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl">💼</div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Work/Projects CRUD Manager</h2>
-                    <p className="text-sm text-gray-700 mb-2">
-                      Create, Read, Update, and Delete work items for the {locales.find(l => l.code === selectedLocale)?.name} locale.
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Changes are saved immediately to the locale file and will appear on the website after refresh.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <WorkCrudManager
-                locale={selectedLocale}
-                password={password}
-                onSuccess={(msg) => {
-                  setMessage(msg);
-                  setTimeout(() => setMessage(''), 5000);
-                }}
-                onError={(err) => {
-                  setError(err);
-                  setTimeout(() => setError(''), 5000);
-                }}
-              />
-            </div>
+            <WorkCrudManager locale={selectedLocale} password={password}
+              onSuccess={showSuccess} onError={showError} />
           )}
-
-          {/* Media CRUD View */}
           {viewMode === 'media-crud' && (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl">📺</div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Media CRUD Manager</h2>
-                    <p className="text-sm text-gray-700 mb-2">
-                      Create, Read, Update, and Delete media items for the {locales.find(l => l.code === selectedLocale)?.name} locale.
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Manage media appearances, TEDx talks, interviews, and other media content.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <MediaCrudManager
-                locale={selectedLocale}
-                password={password}
-                onSuccess={(msg) => {
-                  setMessage(msg);
-                  setTimeout(() => setMessage(''), 5000);
-                }}
-                onError={(err) => {
-                  setError(err);
-                  setTimeout(() => setError(''), 5000);
-                }}
-              />
-            </div>
+            <MediaCrudManager locale={selectedLocale} password={password}
+              onSuccess={showSuccess} onError={showError} />
+          )}
+          {viewMode === 'logo-crud' && (
+            <LogoManager password={password} onSuccess={showSuccess} onError={showError} />
           )}
 
-
-          {/* Status Messages - Global for all views */}
+          {/* Status toasts */}
           {(message || error) && (
-            <div className="mt-6">
+            <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 space-y-2 z-50">
               {message && (
-                <div className="flex items-center gap-3 px-6 py-3 bg-green-50 border-2 border-green-200 text-green-700 rounded-xl font-medium">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-3 px-4 py-3 bg-green-50 border-2 border-green-200 text-green-700 rounded-xl font-medium shadow-lg text-sm">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {message}
                 </div>
               )}
               {error && (
-                <div className="flex items-center gap-3 px-6 py-3 bg-red-50 border-2 border-red-200 text-red-700 rounded-xl font-medium mt-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border-2 border-red-200 text-red-700 rounded-xl font-medium shadow-lg text-sm">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {error}
