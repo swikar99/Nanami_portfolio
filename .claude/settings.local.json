@@ -29,7 +29,13 @@
       "Bash(sed -i '' \"s/'use client';/'use client';\\\\n\\\\nexport const dynamic = 'force-dynamic';/\" \"/Users/swikarsingh/Nanami portfolio /app/[locale]/admin/page.tsx\")",
       "Bash(node -e ' *)",
       "Bash(MONGODB_URI=mongodb+srv://Vercel-Admin-atlas-beige-candle:Asdfg%40123@atlas-beige-candle.8bgywvj.mongodb.net/nanami-portfolio node -e ' *)",
-      "Bash(rm \"/Users/swikarsingh/Nanami portfolio /lib/mongodb.ts\" && echo \"removed mongodb.ts\")"
+      "Bash(rm \"/Users/swikarsingh/Nanami portfolio /lib/mongodb.ts\" && echo \"removed mongodb.ts\")",
+      "Bash(find \"/Users/swikarsingh/Nanami portfolio /app/api\" -not -path \"*/node_modules/*\" | head -30 && echo \"---\" && ls \"/Users/swikarsingh/Nanami portfolio /lib/\")",
+      "Read(//Users/swikarsingh/Nanami portfolio /app/api/**)",
+      "Bash(rm -rf \"/Users/swikarsingh/Nanami portfolio /app/api/admin\")",
+      "Bash(rm -rf \"/Users/swikarsingh/Nanami portfolio /app/api/auth\")",
+      "Bash(rm -rf \"/Users/swikarsingh/Nanami portfolio /app/[locale]/admin\")",
+      "Bash(rm -f \"/Users/swikarsingh/Nanami portfolio /lib/storage.ts\" \"/Users/swikarsingh/Nanami portfolio /lib/auth.ts\")"
     ],
     "additionalDirectories": [
       "/Users/swikarsingh/Nanami portfolio /app/api/admin/logo",
