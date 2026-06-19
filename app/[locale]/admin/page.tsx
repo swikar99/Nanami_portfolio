@@ -19,9 +19,9 @@ export default function AdminPanel() {
   const currentLocale = params.locale as string;
   const { data: session, status } = useSession();
 
-  const [password, setPassword] = useState('admin123'); // Password for API operations
+  const password = 'admin123';
   const [adminEmail, setAdminEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState(''); // Separate state for login form
+  const [loginPassword, setLoginPassword] = useState('');
   const [selectedLocale, setSelectedLocale] = useState('en');
   const [localeData, setLocaleData] = useState<LocaleData>({});
   const [editedData, setEditedData] = useState<string>('');
@@ -30,7 +30,6 @@ export default function AdminPanel() {
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('nav-crud');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedSection, setSelectedSection] = useState<string>('nav');
 
   const locales = [
     { code: 'en', name: 'English', flag: '🇬🇧', color: 'blue' },
@@ -255,7 +254,7 @@ export default function AdminPanel() {
                 type="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="nextintecknology@gmail.com"
+                placeholder="Enter your email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 autoFocus
                 required
@@ -275,12 +274,6 @@ export default function AdminPanel() {
                 required
                 disabled={loading}
               />
-              <p className="text-xs text-gray-500 mt-1.5">
-                💡 Email: <code className="bg-gray-100 px-2 py-0.5 rounded">nextintecknology@gmail.com</code>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                💡 Password: <code className="bg-gray-100 px-2 py-0.5 rounded">admin123</code>
-              </p>
             </div>
             <button
               type="submit"
@@ -299,27 +292,6 @@ export default function AdminPanel() {
       </div>
     );
   }
-
-  const stats = [
-    {
-      label: 'Total Translations',
-      value: countTranslations(localeData),
-      icon: '📝',
-      color: 'blue'
-    },
-    {
-      label: 'Sections',
-      value: Object.keys(localeData).length,
-      icon: '📁',
-      color: 'purple'
-    },
-    {
-      label: 'Current Language',
-      value: locales.find(l => l.code === selectedLocale)?.name || selectedLocale,
-      icon: locales.find(l => l.code === selectedLocale)?.flag || '🌐',
-      color: 'green'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

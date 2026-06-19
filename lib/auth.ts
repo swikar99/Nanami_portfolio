@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Check if credentials match the environment variables
-        const validEmail = 'nextintecknology@gmail.com';
+        const validEmail = 'nanami@gmail.com';
         const validPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
         if (credentials.email === validEmail && credentials.password === validPassword) {
