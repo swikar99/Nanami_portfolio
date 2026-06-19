@@ -19,7 +19,23 @@
       "Bash(grep:*)",
       "Bash(git remote add:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(sed -i '' 's/const token = process\\\\.env\\\\.BLOB_READ_WRITE_TOKEN;/const token = getBlobToken\\(\\);/g' \"/Users/swikarsingh/Nanami portfolio /app/api/admin/images/route.ts\")",
+      "Bash(sed -i '' 's/if \\(onVercel && token\\)/if \\(onVercel \\\\&\\\\& token\\)/g' \"/Users/swikarsingh/Nanami portfolio /app/api/admin/images/route.ts\")",
+      "Bash(sed -i '' 's/const token = process\\\\.env\\\\.BLOB_READ_WRITE_TOKEN;/const token = getBlobToken\\(\\);/g' \"/Users/swikarsingh/Nanami portfolio /app/api/admin/logo/route.ts\")",
+      "Bash(cd \"/Users/swikarsingh/Nanami portfolio \" && cat package.json | grep -E '\"mongodb|mongoose')",
+      "Read(//Users/swikarsingh/Nanami portfolio /**)",
+      "Bash(node -e \"require\\('mongodb'\\); console.log\\('ok', require\\('mongodb/package.json'\\).version\\)\")",
+      "Bash(sed -i '' \"s/'use client';/'use client';\\\\n\\\\nexport const dynamic = 'force-dynamic';/\" \"/Users/swikarsingh/Nanami portfolio /app/[locale]/admin/page.tsx\")",
+      "Bash(node -e ' *)",
+      "Bash(MONGODB_URI=mongodb+srv://Vercel-Admin-atlas-beige-candle:Asdfg%40123@atlas-beige-candle.8bgywvj.mongodb.net/nanami-portfolio node -e ' *)",
+      "Bash(rm \"/Users/swikarsingh/Nanami portfolio /lib/mongodb.ts\" && echo \"removed mongodb.ts\")"
+    ],
+    "additionalDirectories": [
+      "/Users/swikarsingh/Nanami portfolio /app/api/admin/logo",
+      "/Users/swikarsingh/Nanami portfolio /app/[locale]/admin",
+      "/Users/swikarsingh/Nanami portfolio ",
+      "/Users/swikarsingh/Nanami portfolio /lib"
     ]
   }
 }
