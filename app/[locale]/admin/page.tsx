@@ -14,9 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Navigation, Star, User, Briefcase, Video, Phone,
   MessageSquare, Link2, Plus, Trash2, Pencil, LogOut, Database, Globe,
-  Sparkles, Save, Lock, ChevronRight, Image as ImageIcon,
+  Sparkles, Save, Lock, ChevronRight, ChevronLeft, Image as ImageIcon,
   TrendingUp, BarChart2, FileText, CheckCircle2, AlertCircle,
-  ArrowUpRight, Activity, Layers,
+  ArrowUpRight, Activity, Layers, Upload, ExternalLink,
+  Instagram, Facebook, Youtube, Twitter, Linkedin, Mail, Users,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,6 +42,99 @@ const MULTILINE_KEYS = ['description', 'subtitle', 'mission', 'greeting', 'cta']
 
 // ─── Rose gradient helpers ────────────────────────────────────────────────────
 const roseBtn = 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-md shadow-rose-200 border-0';
+
+// ─── Social icon map ──────────────────────────────────────────────────────────
+const SOCIAL_ICON_MAP: Record<string, React.ReactNode> = {
+  Instagram:    <Instagram className="w-5 h-5" />,
+  Facebook:     <Facebook className="w-5 h-5" />,
+  Youtube:      <Youtube className="w-5 h-5" />,
+  Twitter:      <Twitter className="w-5 h-5" />,
+  Linkedin:     <Linkedin className="w-5 h-5" />,
+  Mail:         <Mail className="w-5 h-5" />,
+  Users:        <Users className="w-5 h-5" />,
+  Link:         <Link2 className="w-5 h-5" />,
+  ExternalLink: <ExternalLink className="w-5 h-5" />,
+};
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+const PER_PAGE = 10;
+
+function Pagination({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
+  const pages = Math.ceil(total / PER_PAGE);
+  if (pages <= 1) return null;
+  const start = (page - 1) * PER_PAGE + 1;
+  const end = Math.min(page * PER_PAGE, total);
+  const pageNums = Array.from({ length: pages }, (_, i) => i + 1);
+  return (
+    <div className="flex items-center justify-between px-2 pt-3 border-t border-rose-50">
+      <p className="text-xs text-rose-400 font-medium">{start}–{end} of {total} items</p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(page - 1)} disabled={page === 1}
+          className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        {pageNums.map((p) => (
+          <button key={p} onClick={() => onChange(p)}
+            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${p === page ? roseBtn : 'hover:bg-rose-100 text-rose-500'}`}>
+            {p}
+          </button>
+        ))}
+        <button onClick={() => onChange(page + 1)} disabled={page === pages}
+          className="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Image upload input ───────────────────────────────────────────────────────
+function ImageUploadInput({ value, onChange, folder, password, placeholder }: {
+  value: string; onChange: (url: string) => void; folder: string; password: string; placeholder?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('folder', folder);
+    const res = await fetch('/api/admin/upload', {
+      method: 'POST',
+      headers: { 'x-admin-password': password },
+      body: fd,
+    });
+    const json = await res.json();
+    setUploading(false);
+    if (json.url) { onChange(json.url); toast.success('Image uploaded'); }
+    else toast.error(json.error || 'Upload failed');
+    e.target.value = '';
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="text" value={value} onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder || 'https://... or /images/...'}
+          className="flex-1 px-3 py-2 rounded-xl border border-rose-200 focus:border-rose-400 focus:ring-1 focus:ring-rose-300 text-sm outline-none"
+        />
+        <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer whitespace-nowrap ${roseBtn} ${uploading ? 'opacity-70 pointer-events-none' : ''}`}>
+          <Upload className="w-3.5 h-3.5" />
+          {uploading ? 'Uploading…' : 'Upload Image'}
+          <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        </label>
+      </div>
+      {value && (
+        <img src={value} alt="preview"
+          className="h-28 w-full rounded-xl object-cover border-2 border-rose-100 shadow-sm"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      )}
+    </div>
+  );
+}
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 function LoginPage({ onLogin }: { onLogin: (pw: string) => void }) {
@@ -248,7 +342,7 @@ const EMPTY_WORK: WorkItem = {
   translations: { en: { title: '', description: '' }, ja: { title: '', description: '' }, ne: { title: '', description: '' } },
 };
 
-function WorkForm({ initial, onSave, onClose }: { initial: WorkItem; onSave: (item: WorkItem) => Promise<void>; onClose: () => void }) {
+function WorkForm({ initial, onSave, onClose, password }: { initial: WorkItem; onSave: (item: WorkItem) => Promise<void>; onClose: () => void; password: string }) {
   const [item, setItem] = useState<WorkItem>(initial);
   const [saving, setSaving] = useState(false);
   const set = (field: keyof WorkItem, val: any) => setItem((p) => ({ ...p, [field]: val }));
@@ -288,15 +382,8 @@ function WorkForm({ initial, onSave, onClose }: { initial: WorkItem; onSave: (it
             className="border-rose-200 focus:border-rose-400" />
         </div>
         <div className="col-span-2 space-y-1.5">
-          <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest flex items-center gap-1.5"><ImageIcon className="w-3 h-3" /> Image URL</Label>
-          <Input value={item.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value)}
-            placeholder="/images/projects/himeberry.png or https://..."
-            className="border-rose-200 focus:border-rose-400" />
-          {item.imageUrl && (
-            <img src={item.imageUrl} alt="preview"
-              className="mt-2 h-28 w-full rounded-xl object-cover border-2 border-rose-100 shadow-sm"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          )}
+          <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest flex items-center gap-1.5"><ImageIcon className="w-3 h-3" /> Project Image</Label>
+          <ImageUploadInput value={item.imageUrl ?? ''} onChange={(url) => set('imageUrl', url)} folder="projects" password={password} placeholder="/images/projects/himeberry.png or https://..." />
         </div>
         <div className="col-span-2 space-y-1.5">
           <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest">Project URL</Label>
@@ -361,6 +448,7 @@ function WorkPanel({ password }: { password: string }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<WorkItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -415,7 +503,7 @@ function WorkPanel({ password }: { password: string }) {
             </DialogHeader>
           </div>
           <div className="p-6">
-            {editing && <WorkForm initial={editing} onSave={save} onClose={() => setDialogOpen(false)} />}
+            {editing && <WorkForm initial={editing} onSave={save} onClose={() => setDialogOpen(false)} password={password} />}
           </div>
         </DialogContent>
       </Dialog>
@@ -435,36 +523,45 @@ function WorkPanel({ password }: { password: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Icon</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-14">Image</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key / Order</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Title (EN)</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Style</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Link</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, i) => (
+              {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item, i) => (
                 <TableRow key={item.key} className={`border-rose-50 hover:bg-rose-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-rose-50/20'}`}>
-                  <TableCell className="text-2xl">{item.icon}</TableCell>
                   <TableCell>
-                    <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
+                    {item.imageUrl
+                      ? <img src={item.imageUrl} alt={item.key} className="w-10 h-10 rounded-lg object-cover border border-rose-100" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                      : <span className="text-2xl">{item.icon}</span>}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
+                      <p className="text-xs text-rose-400 mt-0.5">#{item.order}</p>
+                    </div>
                   </TableCell>
                   <TableCell className="font-semibold text-rose-900">{item.translations.en?.title}</TableCell>
+                  <TableCell className="text-xs text-rose-500 max-w-[160px]">
+                    <p className="truncate">{item.color}</p>
+                    {item.videoUrl && <span className="text-purple-400">🎥 Has video</span>}
+                  </TableCell>
                   <TableCell>
                     {item.link
                       ? <a href={item.link} target="_blank" rel="noopener noreferrer"
                           className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[150px] block">{item.link}</a>
-                      : <span className="text-rose-300 text-xs">—</span>
-                    }
+                      : <span className="text-rose-300 text-xs">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1.5">
-                      <button onClick={() => openEdit(item)}
-                        className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
+                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => remove(item.key)}
-                        className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
+                      <button onClick={() => remove(item.key)} className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -473,6 +570,7 @@ function WorkPanel({ password }: { password: string }) {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} total={items.length} onChange={(p) => { setPage(p); }} />
         </div>
       )}
     </div>
@@ -482,7 +580,7 @@ function WorkPanel({ password }: { password: string }) {
 // ─── Media panel ──────────────────────────────────────────────────────────────
 const EMPTY_MEDIA: MediaItem = { key: '', order: 0, type: 'article', url: '', imageName: '', imageUrl: '', thumbnail: '', translations: { en: '', ja: '', ne: '' } };
 
-function MediaForm({ initial, onSave, onClose }: { initial: MediaItem; onSave: (item: MediaItem) => Promise<void>; onClose: () => void }) {
+function MediaForm({ initial, onSave, onClose, password }: { initial: MediaItem; onSave: (item: MediaItem) => Promise<void>; onClose: () => void; password: string }) {
   const [item, setItem] = useState<MediaItem>(initial);
   const [saving, setSaving] = useState(false);
   const set = (field: keyof MediaItem, val: any) => setItem((p) => ({ ...p, [field]: val }));
@@ -536,15 +634,8 @@ function MediaForm({ initial, onSave, onClose }: { initial: MediaItem; onSave: (
             className="border-rose-200 focus:border-rose-400" />
         </div>
         <div className="col-span-2 space-y-1.5">
-          <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest flex items-center gap-1.5"><ImageIcon className="w-3 h-3" /> Image URL</Label>
-          <Input value={item.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value)}
-            placeholder="https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg"
-            className="border-rose-200 focus:border-rose-400" />
-          {item.imageUrl && (
-            <img src={item.imageUrl} alt="preview"
-              className="mt-2 h-24 w-full rounded-xl object-cover border-2 border-rose-100"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          )}
+          <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest flex items-center gap-1.5"><ImageIcon className="w-3 h-3" /> Thumbnail Image</Label>
+          <ImageUploadInput value={item.imageUrl ?? ''} onChange={(url) => set('imageUrl', url)} folder="media" password={password} placeholder="https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg" />
         </div>
       </div>
 
@@ -579,6 +670,7 @@ function MediaPanel({ password }: { password: string }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<MediaItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -636,7 +728,7 @@ function MediaPanel({ password }: { password: string }) {
             </DialogHeader>
           </div>
           <div className="p-6">
-            {editing && <MediaForm initial={editing} onSave={save} onClose={() => setDialogOpen(false)} />}
+            {editing && <MediaForm initial={editing} onSave={save} onClose={() => setDialogOpen(false)} password={password} />}
           </div>
         </DialogContent>
       </Dialog>
@@ -656,23 +748,28 @@ function MediaPanel({ password }: { password: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Type</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-16">Thumb</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key / Order</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Label (EN)</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">URL</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, i) => (
+              {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item, i) => (
                 <TableRow key={item.key} className={`border-rose-50 hover:bg-rose-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-rose-50/20'}`}>
                   <TableCell>
-                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${item.type === 'video' ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white' : 'bg-gradient-to-r from-purple-400 to-indigo-400 text-white'}`}>
-                      {item.type === 'video' ? '🎬' : '📰'} {item.type}
-                    </span>
+                    {item.imageUrl
+                      ? <img src={item.imageUrl} alt={item.key} className="w-14 h-10 rounded-lg object-cover border border-rose-100" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      : <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${item.type === 'video' ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white' : 'bg-gradient-to-r from-purple-400 to-indigo-400 text-white'}`}>
+                          {item.type === 'video' ? '🎬' : '📰'} {item.type}
+                        </span>}
                   </TableCell>
                   <TableCell>
-                    <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
+                    <div>
+                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
+                      <p className="text-xs text-rose-400 mt-0.5">#{item.order} · {item.type}</p>
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm text-rose-900 max-w-[200px] truncate">{item.translations.en}</TableCell>
                   <TableCell>
@@ -681,12 +778,10 @@ function MediaPanel({ password }: { password: string }) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1.5">
-                      <button onClick={() => openEdit(item)}
-                        className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
+                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => remove(item.key)}
-                        className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
+                      <button onClick={() => remove(item.key)} className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -695,6 +790,7 @@ function MediaPanel({ password }: { password: string }) {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} total={items.length} onChange={setPage} />
         </div>
       )}
     </div>
@@ -740,9 +836,21 @@ function SocialForm({ initial, onSave, onClose }: { initial: SocialLink; onSave:
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest">Icon</Label>
           <Select value={item.icon} onValueChange={(v) => set('icon', v)}>
-            <SelectTrigger className="border-rose-200"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="border-rose-200">
+              <div className="flex items-center gap-2">
+                <span className="text-rose-600">{SOCIAL_ICON_MAP[item.icon] ?? <Link2 className="w-4 h-4" />}</span>
+                <span>{item.icon}</span>
+              </div>
+            </SelectTrigger>
             <SelectContent>
-              {ICON_OPTIONS.map((ic) => <SelectItem key={ic} value={ic}>{ic}</SelectItem>)}
+              {ICON_OPTIONS.map((ic) => (
+                <SelectItem key={ic} value={ic}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-rose-500">{SOCIAL_ICON_MAP[ic] ?? <Link2 className="w-4 h-4" />}</span>
+                    <span>{ic}</span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -782,6 +890,7 @@ function SocialsPanel({ password }: { password: string }) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<SocialLink | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -852,30 +961,32 @@ function SocialsPanel({ password }: { password: string }) {
           <p className="text-rose-400 text-sm mt-1">Click "Seed from files" to import</p>
         </div>
       ) : (
-        <div className="grid gap-3">
-          {items.map((item) => (
+        <div className="space-y-3">
+          {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item) => (
             <div key={item.key} className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-rose-100 shadow-sm hover:shadow-md hover:shadow-rose-100 transition-all">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-md shrink-0`}>
-                <span className="text-white text-lg">🔗</span>
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-md shadow-rose-200/50 shrink-0 text-white`}>
+                {SOCIAL_ICON_MAP[item.icon] ?? <Link2 className="w-5 h-5" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-rose-800">{item.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-rose-800">{item.name}</p>
+                  <span className="text-xs font-mono bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded">{item.icon}</span>
+                </div>
                 <a href={item.url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-rose-400 hover:text-rose-600 hover:underline truncate block">{item.url}</a>
+                  className="text-xs text-rose-400 hover:text-rose-600 hover:underline truncate block mt-0.5">{item.url}</a>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-mono bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg mr-2">{item.icon}</span>
-                <button onClick={() => openEdit(item)}
-                  className="p-2 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} opacity-40`} title={item.gradient} />
+                <button onClick={() => openEdit(item)} className="p-2 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => remove(item.key)}
-                  className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
+                <button onClick={() => remove(item.key)} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           ))}
+          <Pagination page={page} total={items.length} onChange={setPage} />
         </div>
       )}
     </div>
@@ -1226,7 +1337,7 @@ export default function AdminPage() {
         </div>
 
         {/* Content */}
-        <div className="p-8 max-w-4xl">
+        <div className="p-8 w-full">
           {active === 'dashboard' && <DashboardPanel onNavigate={setActive} />}
           {SIMPLE_SECTIONS.includes(active) && (
             <SectionPanel key={active} section={active} password={password} />
