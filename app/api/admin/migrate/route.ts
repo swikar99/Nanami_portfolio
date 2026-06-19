@@ -25,30 +25,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No blob token found. Connect a Blob store in Vercel → Storage.' }, { status: 500 });
   }
 
-  const { list, del, put } = await import('@vercel/blob');
+  const { put } = await import('@vercel/blob');
   const results: Record<string, string> = {};
 
   for (const locale of LOCALES) {
     try {
       const content = await readFile(join(process.cwd(), 'locales', `${locale}.json`), 'utf-8');
       const data = JSON.parse(content);
-      const pathname = `locales/${locale}.json`;
-
-      // Remove any existing blob for this locale
-      const { blobs } = await list({ prefix: pathname, token });
-      const existing = blobs.filter((b) => b.pathname === pathname);
-      if (existing.length > 0) {
-        await del(existing.map((b) => b.url), { token });
-      }
-
-      // Upload fresh
-      await put(pathname, JSON.stringify(data, null, 2), {
+      await put(`locales/${locale}.json`, JSON.stringify(data, null, 2), {
         access: 'public',
         contentType: 'application/json',
         addRandomSuffix: false,
+        allowOverwrite: true,
         token,
       });
-
       results[locale] = 'migrated';
     } catch (e: any) {
       results[locale] = `failed: ${e.message}`;

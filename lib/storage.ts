@@ -56,17 +56,12 @@ export async function writeLocale(locale: string, data: any): Promise<void> {
     return;
   }
 
-  const { list, del, put } = await import('@vercel/blob');
-  const { blobs } = await list({ prefix: blobPath(locale), token });
-  const existing = blobs.filter((b) => b.pathname === blobPath(locale));
-  if (existing.length > 0) {
-    await del(existing.map((b) => b.url), { token });
-  }
-
+  const { put } = await import('@vercel/blob');
   await put(blobPath(locale), JSON.stringify(data, null, 2), {
     access: 'public',
     contentType: 'application/json',
     addRandomSuffix: false,
+    allowOverwrite: true,
     token,
   });
 }

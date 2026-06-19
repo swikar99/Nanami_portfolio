@@ -4,9 +4,17 @@ const LOGO_NAMES = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const onVercel = process.env.VERCEL === '1';
 
+function getBlobToken() {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const entry = Object.entries(process.env).find(
+    ([k, v]) => k.endsWith('_READ_WRITE_TOKEN') && v?.startsWith('vercel_blob_rw_')
+  );
+  return entry?.[1];
+}
+
 export async function GET() {
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
 
     if (onVercel && token) {
       const { list } = await import('@vercel/blob');
@@ -54,15 +62,11 @@ export async function POST(request: NextRequest) {
 
     const extension = file.name.split('.').pop() || 'png';
     const filename = `logo.${extension}`;
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
 
     if (onVercel && token) {
-      const { list, del, put } = await import('@vercel/blob');
-      const { blobs } = await list({ prefix: 'logo/', token });
-      if (blobs.length > 0) {
-        await del(blobs.map((b) => b.url), { token });
-      }
-      const blob = await put(`logo/${filename}`, file, { access: 'public', token, addRandomSuffix: false });
+      const { put } = await import('@vercel/blob');
+      const blob = await put(`logo/${filename}`, file, { access: 'public', token, addRandomSuffix: false, allowOverwrite: true });
       return NextResponse.json({ success: true, filename, path: blob.url });
     } else {
       const { writeFile, unlink } = await import('fs/promises');
@@ -91,7 +95,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
 
     if (onVercel && token) {
       const { list, del } = await import('@vercel/blob');

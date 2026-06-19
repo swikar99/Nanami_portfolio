@@ -4,6 +4,14 @@ const VALID_CATEGORIES = ['profile', 'projects', 'media', 'hero', 'about', 'work
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const onVercel = process.env.VERCEL === '1';
 
+function getBlobToken() {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const entry = Object.entries(process.env).find(
+    ([k, v]) => k.endsWith('_READ_WRITE_TOKEN') && v?.startsWith('vercel_blob_rw_')
+  );
+  return entry?.[1];
+}
+
 export async function GET(request: NextRequest) {
   try {
     const category = request.nextUrl.searchParams.get('category');
@@ -13,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const images: Record<string, string[]> = {};
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
     const categoriesToFetch = category ? [category] : VALID_CATEGORIES;
 
     if (onVercel && token) {
@@ -72,7 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum size is 5MB.' }, { status: 400 });
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
 
     if (onVercel && token) {
       const { put } = await import('@vercel/blob');
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
         access: 'public',
         token,
         addRandomSuffix: false,
+        allowOverwrite: true,
       });
       return NextResponse.json({ success: true, filename: file.name, path: blob.url });
     } else {
@@ -113,7 +122,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const token = getBlobToken();
 
     if (onVercel && token) {
       const { list, del } = await import('@vercel/blob');
