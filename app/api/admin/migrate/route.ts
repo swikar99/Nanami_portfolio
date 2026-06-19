@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { writeLocale, saveWorkItem, saveMediaItem } from '@/lib/storage';
-import type { WorkItem, MediaItem } from '@/lib/storage';
+import { writeLocale, saveWorkItem, saveMediaItem, saveSocialLink } from '@/lib/storage';
+import type { WorkItem, MediaItem, SocialLink } from '@/lib/storage';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
@@ -126,6 +126,13 @@ const SEED_MEDIA: MediaItem[] = [
   },
 ];
 
+const SEED_SOCIALS: SocialLink[] = [
+  { key: 'instagram', order: 0, name: 'Instagram', url: 'https://www.instagram.com/nanami733/', icon: 'Instagram', gradient: 'from-purple-600 via-pink-600 to-orange-500' },
+  { key: 'facebook', order: 1, name: 'Facebook', url: 'https://www.facebook.com/nanami.wakayama.56/', icon: 'Facebook', gradient: 'from-blue-600 to-blue-700' },
+  { key: 'linktree', order: 2, name: 'Linktree', url: 'https://linktr.ee/Nanaminmin', icon: 'Link', gradient: 'from-green-500 to-emerald-600' },
+  { key: 'awlf', order: 3, name: 'AWLF', url: 'https://awlf.asia/ja/members/nanami-wakayama/', icon: 'Users', gradient: 'from-blue-500 to-cyan-600' },
+];
+
 export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json();
@@ -161,6 +168,16 @@ export async function POST(req: NextRequest) {
         results[`media_${item.key}`] = 'seeded';
       } catch (e: any) {
         results[`media_${item.key}`] = `failed: ${e.message}`;
+      }
+    }
+
+    // Seed social links
+    for (const item of SEED_SOCIALS) {
+      try {
+        await saveSocialLink(item);
+        results[`social_${item.key}`] = 'seeded';
+      } catch (e: any) {
+        results[`social_${item.key}`] = `failed: ${e.message}`;
       }
     }
 

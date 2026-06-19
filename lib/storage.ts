@@ -120,3 +120,40 @@ export async function deleteMediaItem(key: string): Promise<void> {
   const db = await getDb();
   await db.collection('media_items').deleteOne({ key });
 }
+
+// ─── Social links ─────────────────────────────────────────────────────────────
+
+export interface SocialLink {
+  key: string;
+  order: number;
+  name: string;
+  url: string;
+  icon: string;
+  gradient: string;
+}
+
+export async function getSocialLinks(): Promise<SocialLink[]> {
+  if (!process.env.MONGODB_URI) return [];
+  const { getDb } = await import('./mongodb');
+  const db = await getDb();
+  const docs = await db.collection('social_links').find().sort({ order: 1 }).toArray();
+  return docs.map(({ _id, ...d }) => d) as SocialLink[];
+}
+
+export async function saveSocialLink(item: SocialLink): Promise<void> {
+  if (!process.env.MONGODB_URI) return;
+  const { getDb } = await import('./mongodb');
+  const db = await getDb();
+  await db.collection('social_links').updateOne(
+    { key: item.key },
+    { $set: { ...item, updatedAt: new Date() } },
+    { upsert: true }
+  );
+}
+
+export async function deleteSocialLink(key: string): Promise<void> {
+  if (!process.env.MONGODB_URI) return;
+  const { getDb } = await import('./mongodb');
+  const db = await getDb();
+  await db.collection('social_links').deleteOne({ key });
+}

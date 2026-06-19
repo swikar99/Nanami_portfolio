@@ -10,13 +10,22 @@
       "Bash(find \"/Users/swikarsingh/Nanami portfolio /app\" -name \"*.tsx\" -o -name \"*.ts\" | grep -v node_modules | grep -v \".next\" | sort && echo \"---\" && find \"/Users/swikarsingh/Nanami portfolio /components\" -name \"*.tsx\" 2>/dev/null | sort)",
       "Read(//Users/swikarsingh/Nanami portfolio /components/**)",
       "Bash(ls \"/Users/swikarsingh/Nanami portfolio /node_modules/swiper/css\" 2>/dev/null | head -5 && cat \"/Users/swikarsingh/Nanami portfolio /tsconfig.json\")",
-      "Read(//Users/swikarsingh/Nanami portfolio /node_modules/swiper/**)"
+      "Read(//Users/swikarsingh/Nanami portfolio /node_modules/swiper/**)",
+      "Bash(cat \"/Users/swikarsingh/Nanami portfolio /package.json\" | grep '\"next\"')",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npx shadcn@latest add input label card tabs table badge select textarea separator scroll-area dialog toast sidebar --yes)",
+      "Bash(npx shadcn@latest add sonner --yes)",
+      "Bash(npx shadcn@latest add card input label badge tabs select textarea separator dialog --yes)",
+      "Bash(npx shadcn@latest add table --yes)",
+      "Bash(mkdir -p \"/Users/swikarsingh/Nanami portfolio /app/api/admin/socials\" \"/Users/swikarsingh/Nanami portfolio /app/api/content/socials\")"
     ],
     "additionalDirectories": [
       "/Users/swikarsingh/Nanami portfolio ",
       "/Users/swikarsingh/Nanami portfolio /app/api/content/sections",
       "/Users/swikarsingh/Nanami portfolio /app/api/content/media",
-      "/Users/swikarsingh/Nanami portfolio /components"
+      "/Users/swikarsingh/Nanami portfolio /components",
+      "/Users/swikarsingh/Nanami portfolio /app/api/admin",
+      "/Users/swikarsingh/Nanami portfolio /app/api/content/socials"
     ]
   }
 }
