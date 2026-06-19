@@ -1,161 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, readdir, unlink } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
 
-const LOGO_DIR = join(process.cwd(), 'public');
+const LOGO_NAMES = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const onVercel = process.env.VERCEL === '1';
 
-// GET: Fetch current logo
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Check for common logo file names
-    const logoFiles = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    for (const filename of logoFiles) {
-      const logoPath = join(LOGO_DIR, filename);
-      if (existsSync(logoPath)) {
-        return NextResponse.json({
-          exists: true,
-          filename,
-          path: `/${filename}`
-        });
+    if (onVercel && token) {
+      const { list } = await import('@vercel/blob');
+      const { blobs } = await list({ prefix: 'logo/', token });
+      if (blobs.length > 0) {
+        const b = blobs[0];
+        return NextResponse.json({ exists: true, filename: b.pathname.split('/').pop(), path: b.url });
       }
+      return NextResponse.json({ exists: false, filename: null, path: null });
+    } else {
+      const { existsSync } = await import('fs');
+      const { join } = await import('path');
+      for (const filename of LOGO_NAMES) {
+        if (existsSync(join(process.cwd(), 'public', filename))) {
+          return NextResponse.json({ exists: true, filename, path: `/${filename}` });
+        }
+      }
+      return NextResponse.json({ exists: false, filename: null, path: null });
     }
-
-    return NextResponse.json({
-      exists: false,
-      filename: null,
-      path: null
-    });
   } catch (error) {
-    console.error('Error reading logo:', error);
-    return NextResponse.json(
-      { error: 'Failed to read logo' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to read logo', details: (error as Error).message }, { status: 500 });
   }
 }
 
-// POST: Upload/Update logo
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const password = formData.get('password') as string;
 
-    // Password check
-    if (password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (password !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Only PNG, JPG, SVG, and WEBP are allowed.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid file type. Only PNG, JPG, SVG, and WEBP are allowed.' }, { status: 400 });
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 2MB.' }, { status: 400 });
     }
 
-    // Validate file size (max 2MB for logo)
-    const maxSize = 2 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 2MB.' },
-        { status: 400 }
-      );
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Determine file extension
     const extension = file.name.split('.').pop() || 'png';
     const filename = `logo.${extension}`;
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    // Delete old logo files first
-    const oldLogoFiles = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
-    for (const oldFile of oldLogoFiles) {
-      const oldPath = join(LOGO_DIR, oldFile);
-      if (existsSync(oldPath)) {
-        try {
-          await unlink(oldPath);
-        } catch (err) {
-          console.error(`Failed to delete old logo ${oldFile}:`, err);
+    if (onVercel && token) {
+      const { list, del, put } = await import('@vercel/blob');
+      const { blobs } = await list({ prefix: 'logo/', token });
+      if (blobs.length > 0) {
+        await del(blobs.map((b) => b.url), { token });
+      }
+      const blob = await put(`logo/${filename}`, file, { access: 'public', token, addRandomSuffix: false });
+      return NextResponse.json({ success: true, filename, path: blob.url });
+    } else {
+      const { writeFile, unlink } = await import('fs/promises');
+      const { existsSync } = await import('fs');
+      const { join } = await import('path');
+      for (const old of LOGO_NAMES) {
+        const p = join(process.cwd(), 'public', old);
+        if (existsSync(p)) {
+          try { await unlink(p); } catch {}
         }
       }
+      const bytes = await file.arrayBuffer();
+      await writeFile(join(process.cwd(), 'public', filename), Buffer.from(bytes));
+      return NextResponse.json({ success: true, filename, path: `/${filename}` });
     }
-
-    // Write new logo file
-    const filePath = join(LOGO_DIR, filename);
-    await writeFile(filePath, buffer);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Logo uploaded successfully',
-      filename,
-      path: `/${filename}`
-    });
   } catch (error) {
-    console.error('Error uploading logo:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload logo', details: (error as Error).message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to upload logo', details: (error as Error).message }, { status: 500 });
   }
 }
 
-// DELETE: Delete logo
 export async function DELETE(request: NextRequest) {
   try {
     const { password } = await request.json();
 
-    // Password check
-    if (password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (password !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Delete all logo files
-    const logoFiles = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
-    let deleted = false;
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    for (const filename of logoFiles) {
-      const logoPath = join(LOGO_DIR, filename);
-      if (existsSync(logoPath)) {
-        await unlink(logoPath);
-        deleted = true;
+    if (onVercel && token) {
+      const { list, del } = await import('@vercel/blob');
+      const { blobs } = await list({ prefix: 'logo/', token });
+      if (blobs.length === 0) {
+        return NextResponse.json({ error: 'No logo found to delete' }, { status: 404 });
       }
+      await del(blobs.map((b) => b.url), { token });
+      return NextResponse.json({ success: true });
+    } else {
+      const { unlink } = await import('fs/promises');
+      const { existsSync } = await import('fs');
+      const { join } = await import('path');
+      let deleted = false;
+      for (const filename of LOGO_NAMES) {
+        const p = join(process.cwd(), 'public', filename);
+        if (existsSync(p)) { await unlink(p); deleted = true; }
+      }
+      if (!deleted) return NextResponse.json({ error: 'No logo found to delete' }, { status: 404 });
+      return NextResponse.json({ success: true });
     }
-
-    if (!deleted) {
-      return NextResponse.json(
-        { error: 'No logo found to delete' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Logo deleted successfully'
-    });
   } catch (error) {
-    console.error('Error deleting logo:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete logo', details: (error as Error).message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete logo', details: (error as Error).message }, { status: 500 });
   }
 }
