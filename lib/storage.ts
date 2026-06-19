@@ -41,6 +41,12 @@ export async function writeLocale(locale: string, data: any): Promise<void> {
     return;
   }
 
+  if (process.env.VERCEL) {
+    throw new Error(
+      'Redis is not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel → Storage → Upstash Redis.'
+    );
+  }
+
   // Local dev — write to file
   const filePath = join(process.cwd(), 'locales', `${locale}.json`);
   await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
