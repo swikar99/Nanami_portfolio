@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     key: item.key,
     icon: item.icon,
     imageName: item.imageName,
+    imageUrl: item.imageUrl ?? '',
     color: item.color,
     link: item.link,
     videoUrl: item.videoUrl,

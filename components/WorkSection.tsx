@@ -19,6 +19,7 @@ interface WorkData {
   description: string;
   icon: string;
   imageName: string;
+  imageUrl: string;
   color: string;
   link: string;
   videoUrl: string;
@@ -26,12 +27,16 @@ interface WorkData {
 
 function WorkCard({ work, index, isInView, onVideoClick }: { work: WorkData; index: number; isInView: boolean; onVideoClick: (w: WorkData) => void }) {
   const [imageError, setImageError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(`/images/projects/${work.imageName}.png`);
+  const initialSrc = work.imageUrl || `/images/projects/${work.imageName}.png`;
+  const [imgSrc, setImgSrc] = useState(initialSrc);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setImgSrc(`/images/projects/${work.imageName}.png?t=${Date.now()}`);
-  }, [work.imageName]);
+    const src = work.imageUrl || `/images/projects/${work.imageName}.png?t=${Date.now()}`;
+    setImgSrc(src);
+    setIsLoading(true);
+    setImageError(false);
+  }, [work.imageUrl, work.imageName]);
 
   return (
     <motion.div
@@ -60,6 +65,12 @@ function WorkCard({ work, index, isInView, onVideoClick }: { work: WorkData; ind
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               onLoad={() => setIsLoading(false)}
               onError={() => {
+                // If we loaded from imageUrl and it failed, fall back to local paths
+                if (work.imageUrl && imgSrc === work.imageUrl) {
+                  setImgSrc(`/images/projects/${work.imageName}.png?t=${Date.now()}`);
+                  setIsLoading(true);
+                  return;
+                }
                 const ts = Date.now();
                 if (imgSrc.includes('.png')) { setImgSrc(`/images/projects/${work.imageName}.jpg?t=${ts}`); setIsLoading(true); }
                 else if (imgSrc.includes('.jpg')) { setImgSrc(`/images/projects/${work.imageName}.jpeg?t=${ts}`); setIsLoading(true); }

@@ -18,13 +18,15 @@ interface MediaData {
   type: 'video' | 'article';
   url: string;
   imageName: string;
+  imageUrl: string;
   thumbnail: string;
   label: string;
 }
 
 function VideoCard({ video, index, isInView }: { video: MediaData; index: number; isInView: boolean }) {
   const [imageError, setImageError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(`/images/media/${video.imageName}.jpg`);
+  const initialSrc = video.imageUrl || `/images/media/${video.imageName}.jpg`;
+  const [imgSrc, setImgSrc] = useState(initialSrc);
   const [isLoading, setIsLoading] = useState(true);
 
   const getYouTubeVideoId = (url: string) => {
@@ -33,8 +35,11 @@ function VideoCard({ video, index, isInView }: { video: MediaData; index: number
   };
 
   useEffect(() => {
-    setImgSrc(`/images/media/${video.imageName}.jpg?t=${Date.now()}`);
-  }, [video.imageName]);
+    const src = video.imageUrl || `/images/media/${video.imageName}.jpg?t=${Date.now()}`;
+    setImgSrc(src);
+    setIsLoading(true);
+    setImageError(false);
+  }, [video.imageUrl, video.imageName]);
 
   return (
     <motion.a href={video.url} target="_blank" rel="noopener noreferrer"
@@ -56,6 +61,13 @@ function VideoCard({ video, index, isInView }: { video: MediaData; index: number
               onError={() => {
                 const ts = Date.now();
                 const videoId = getYouTubeVideoId(video.url);
+                // imageUrl failed — fall back to local or YouTube thumbnail
+                if (video.imageUrl && imgSrc === video.imageUrl) {
+                  const fallback = videoId
+                    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+                    : `/images/media/${video.imageName}.jpg?t=${ts}`;
+                  setImgSrc(fallback); setIsLoading(true); return;
+                }
                 if (imgSrc.includes('.jpg') && !imgSrc.includes('youtube')) { setImgSrc(`/images/media/${video.imageName}.png?t=${ts}`); setIsLoading(true); }
                 else if (imgSrc.includes('.png')) { setImgSrc(`/images/media/${video.imageName}.jpeg?t=${ts}`); setIsLoading(true); }
                 else if (imgSrc.includes('.jpeg')) { setImgSrc(`/images/media/${video.imageName}.webp?t=${ts}`); setIsLoading(true); }
@@ -108,12 +120,16 @@ const ARTICLE_ICONS: Record<string, React.ReactNode> = {
 
 function ArticleCard({ article, index, isInView }: { article: MediaData; index: number; isInView: boolean }) {
   const [imageError, setImageError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(`/images/media/${article.imageName}.jpg`);
+  const initialSrc = article.imageUrl || `/images/media/${article.imageName}.jpg`;
+  const [imgSrc, setImgSrc] = useState(initialSrc);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setImgSrc(`/images/media/${article.imageName}.jpg?t=${Date.now()}`);
-  }, [article.imageName]);
+    const src = article.imageUrl || `/images/media/${article.imageName}.jpg?t=${Date.now()}`;
+    setImgSrc(src);
+    setIsLoading(true);
+    setImageError(false);
+  }, [article.imageUrl, article.imageName]);
 
   const icon = ARTICLE_ICONS.default;
 
@@ -137,6 +153,9 @@ function ArticleCard({ article, index, isInView }: { article: MediaData; index: 
                 onLoad={() => setIsLoading(false)}
                 onError={() => {
                   const ts = Date.now();
+                  if (article.imageUrl && imgSrc === article.imageUrl) {
+                    setImgSrc(`/images/media/${article.imageName}.jpg?t=${ts}`); setIsLoading(true); return;
+                  }
                   if (imgSrc.includes('.jpg')) { setImgSrc(`/images/media/${article.imageName}.png?t=${ts}`); setIsLoading(true); }
                   else if (imgSrc.includes('.png')) { setImgSrc(`/images/media/${article.imageName}.jpeg?t=${ts}`); setIsLoading(true); }
                   else if (imgSrc.includes('.jpeg')) { setImgSrc(`/images/media/${article.imageName}.webp?t=${ts}`); setIsLoading(true); }

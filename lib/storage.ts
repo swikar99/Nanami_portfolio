@@ -8,6 +8,7 @@ export interface WorkItem {
   order: number;
   icon: string;
   imageName: string;
+  imageUrl: string;
   color: string;
   link: string;
   videoUrl: string;
@@ -22,6 +23,7 @@ export interface MediaItem {
   type: 'video' | 'article';
   url: string;
   imageName: string;
+  imageUrl: string;
   thumbnail: string;
   translations: {
     [locale: string]: string;

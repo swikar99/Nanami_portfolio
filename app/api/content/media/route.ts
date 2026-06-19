@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
     type: item.type,
     url: item.url,
     imageName: item.imageName,
+    imageUrl: item.imageUrl ?? '',
     thumbnail: item.thumbnail,
     label: item.translations[locale] ?? item.translations['en'] ?? item.key,
   }));
