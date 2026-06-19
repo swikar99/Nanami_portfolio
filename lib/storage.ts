@@ -43,10 +43,15 @@ export async function writeLocale(locale: string, data: any): Promise<void> {
     return;
   }
 
-  const col = await getCollection();
-  await col.updateOne(
-    { locale },
-    { $set: { locale, data, updatedAt: new Date() } },
-    { upsert: true }
-  );
+  try {
+    const col = await getCollection();
+    await col.updateOne(
+      { locale },
+      { $set: { locale, data, updatedAt: new Date() } },
+      { upsert: true }
+    );
+  } catch (e: any) {
+    console.error('[storage] MongoDB write failed:', e.message);
+    throw new Error(`Database write failed: ${e.message}. Fix MONGODB_URI in Vercel → Settings → Environment Variables.`);
+  }
 }

@@ -1,37 +1,31 @@
 import { NextResponse } from 'next/server';
 
-function getBlobToken() {
-  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
-  const entry = Object.entries(process.env).find(
-    ([k, v]) => k.endsWith('_READ_WRITE_TOKEN') && v?.startsWith('vercel_blob_rw_')
-  );
-  return entry?.[1];
-}
-
 export async function GET() {
-  const token = getBlobToken();
+  const mongoUri = process.env.MONGODB_URI;
   const adminPw = process.env.ADMIN_PASSWORD;
-
-  const tokenEnvKeys = Object.keys(process.env).filter(k => k.includes('READ_WRITE_TOKEN'));
 
   const result: Record<string, any> = {
     VERCEL: process.env.VERCEL,
-    blobTokenFound: token ? `yes (starts with ${token.slice(0, 20)}...)` : 'NOT FOUND',
-    blobTokenEnvKeys: tokenEnvKeys,
+    MONGODB_URI: mongoUri
+      ? `set (${mongoUri.replace(/:([^@]+)@/, ':****@')})`
+      : 'NOT SET',
     ADMIN_PASSWORD: adminPw ? 'set' : 'NOT SET',
-    blobTest: null,
-    blobError: null,
+    mongoTest: null,
+    mongoError: null,
+    localesInDB: null,
   };
 
-  if (token) {
+  if (mongoUri) {
     try {
-      const { list } = await import('@vercel/blob');
-      const { blobs } = await list({ prefix: 'locales/', token });
-      result.blobTest = `ok — ${blobs.length} blobs found`;
-      result.blobs = blobs.map((b) => b.pathname);
+      const clientPromise = (await import('@/lib/mongodb')).default;
+      const client = await clientPromise;
+      const col = client.db('nanami-portfolio').collection('locales');
+      const docs = await col.find({}, { projection: { locale: 1 } }).toArray();
+      result.mongoTest = 'connected';
+      result.localesInDB = docs.map((d) => d.locale);
     } catch (e: any) {
-      result.blobTest = 'FAILED';
-      result.blobError = e.message;
+      result.mongoTest = 'FAILED';
+      result.mongoError = e.message;
     }
   }
 
