@@ -19,7 +19,7 @@ export async function readLocale(locale: string): Promise<any> {
   // Local dev or build time (no token) → read from bundled file
   if (!onVercel || !token) return readFromFile(locale);
 
-  const { list, put } = await import('@vercel/blob');
+  const { list } = await import('@vercel/blob');
   const { blobs } = await list({ prefix: blobPath(locale), token });
   const exact = blobs.find((b) => b.pathname === blobPath(locale));
   if (exact) {
@@ -38,8 +38,9 @@ export async function writeLocale(locale: string, data: any): Promise<void> {
 
   if (!token) {
     if (onVercel) {
+      console.error('[storage] BLOB_READ_WRITE_TOKEN is not set. VERCEL env:', process.env.VERCEL, 'All env keys:', Object.keys(process.env).filter(k => k.startsWith('BLOB')));
       throw new Error(
-        'BLOB_READ_WRITE_TOKEN not set. Add it in Vercel → Project Settings → Environment Variables.'
+        'BLOB_READ_WRITE_TOKEN not set. Go to Vercel → Project Settings → Environment Variables → make sure BLOB_READ_WRITE_TOKEN is saved with Production scope selected, then Redeploy.'
       );
     }
     // Local dev → write to file
