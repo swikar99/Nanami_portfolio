@@ -5,7 +5,8 @@
       "Read(//Users/swikarsingh/Nanami portfolio /app/**)",
       "Bash(grep -r \"admin\\\\|next-auth\\\\|@vercel/blob\\\\|mongodb\" \"/Users/swikarsingh/Nanami portfolio /package.json\")",
       "Read(//Users/swikarsingh/Nanami portfolio /**)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(MONGODB_URI='mongodb+srv://Vercel-Admin-atlas-bronze-notebook:1l9doNHVsl3h49O7@atlas-bronze-notebook.zuozwdl.mongodb.net/?retryWrites=true&w=majority' node -e ' *)"
     ],
     "additionalDirectories": [
       "/Users/swikarsingh/Nanami portfolio "

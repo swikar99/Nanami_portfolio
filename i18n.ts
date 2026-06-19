@@ -11,7 +11,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
     notFound();
   }
 
-  const messages = (await import(`./locales/${locale}.json`)).default;
+  const { readLocale } = await import('@/lib/storage');
+  const messages = await readLocale(locale);
 
   return { locale, messages };
 });
