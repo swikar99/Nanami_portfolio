@@ -1,53 +1,52 @@
-import { Redis } from '@upstash/redis';
+import { put, list, del } from '@vercel/blob';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 
-function getRedis(): Redis | null {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  }
-  return null;
+const isVercel = !!process.env.BLOB_READ_WRITE_TOKEN;
+
+function blobPath(locale: string) {
+  return `locales/${locale}.json`;
 }
 
 async function readFromFile(locale: string): Promise<any> {
-  const filePath = join(process.cwd(), 'locales', `${locale}.json`);
-  const content = await readFile(filePath, 'utf-8');
+  const content = await readFile(join(process.cwd(), 'locales', `${locale}.json`), 'utf-8');
   return JSON.parse(content);
 }
 
 export async function readLocale(locale: string): Promise<any> {
-  const redis = getRedis();
-  if (redis) {
-    const data = await redis.get<any>(`locale:${locale}`);
-    if (data) return data;
+  if (!isVercel) return readFromFile(locale);
 
-    // First run: seed Redis from the bundled file
-    const seed = await readFromFile(locale);
-    await redis.set(`locale:${locale}`, seed);
-    return seed;
+  const { blobs } = await list({ prefix: blobPath(locale) });
+  if (blobs.length > 0) {
+    const res = await fetch(blobs[0].url);
+    return res.json();
   }
 
-  // Local dev — read directly from file
-  return readFromFile(locale);
+  // First run: seed from bundled file
+  const seed = await readFromFile(locale);
+  await writeLocale(locale, seed);
+  return seed;
 }
 
 export async function writeLocale(locale: string, data: any): Promise<void> {
-  const redis = getRedis();
-  if (redis) {
-    await redis.set(`locale:${locale}`, data);
+  if (!isVercel) {
+    await writeFile(
+      join(process.cwd(), 'locales', `${locale}.json`),
+      JSON.stringify(data, null, 2),
+      'utf-8'
+    );
     return;
   }
 
-  if (process.env.VERCEL) {
-    throw new Error(
-      'Redis is not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel → Storage → Upstash Redis.'
-    );
+  // Delete old blob then write new one (Blob has no in-place update)
+  const { blobs } = await list({ prefix: blobPath(locale) });
+  if (blobs.length > 0) {
+    await del(blobs.map((b) => b.url));
   }
 
-  // Local dev — write to file
-  const filePath = join(process.cwd(), 'locales', `${locale}.json`);
-  await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  await put(blobPath(locale), JSON.stringify(data, null, 2), {
+    access: 'public',
+    contentType: 'application/json',
+    addRandomSuffix: false,
+  });
 }
