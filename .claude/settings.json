@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(find \"/Users/swikarsingh/Nanami portfolio /app\" -name \"*.tsx\" -o -name \"*.ts\" | grep -v node_modules | grep -v \".next\" | sort && echo \"---\" && grep -r \"admin\\\\|nextauth\\\\|NextAuth\\\\|signIn\\\\|signOut\\\\|useSession\" \"/Users/swikarsingh/Nanami portfolio /app\" --include=\"*.tsx\" --include=\"*.ts\" -l 2>/dev/null)",
+      "Read(//Users/swikarsingh/Nanami portfolio /app/**)",
+      "Bash(grep -r \"admin\\\\|next-auth\\\\|@vercel/blob\\\\|mongodb\" \"/Users/swikarsingh/Nanami portfolio /package.json\")",
+      "Read(//Users/swikarsingh/Nanami portfolio /**)",
+      "Bash(npm uninstall *)"
+    ],
     "additionalDirectories": [
       "/Users/swikarsingh/Nanami portfolio "
     ]
