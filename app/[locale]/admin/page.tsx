@@ -6,18 +6,17 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  LayoutDashboard, Navigation, Star, User, Briefcase, Video, Phone,
+  Navigation, Star, User, Briefcase, Video, Phone,
   MessageSquare, Link2, Plus, Trash2, Pencil, LogOut, Database, Globe,
-  Sparkles, Save, Lock, ChevronRight, Eye, Image as ImageIcon,
+  Sparkles, Save, Lock, ChevronRight, Image as ImageIcon,
+  TrendingUp, BarChart2, FileText, CheckCircle2, AlertCircle,
+  ArrowUpRight, Activity, Layers,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -28,21 +27,20 @@ interface SocialLink { key: string; order: number; name: string; url: string; ic
 const LOCALES = ['en', 'ja', 'ne'];
 const LOCALE_FLAGS: Record<string, string> = { en: '🇬🇧', ja: '🇯🇵', ne: '🇳🇵' };
 const NAV_ITEMS = [
-  { id: 'nav',     label: 'Navigation',    icon: Navigation,      emoji: '🧭' },
-  { id: 'hero',    label: 'Hero',          icon: Star,            emoji: '✨' },
-  { id: 'about',   label: 'About',         icon: User,            emoji: '👩' },
-  { id: 'work',    label: 'Work Projects', icon: Briefcase,       emoji: '💼' },
-  { id: 'media',   label: 'Media & Talks', icon: Video,           emoji: '🎬' },
-  { id: 'contact', label: 'Contact',       icon: Phone,           emoji: '📱' },
-  { id: 'footer',  label: 'Footer',        icon: MessageSquare,   emoji: '🔻' },
-  { id: 'socials', label: 'Social Links',  icon: Link2,           emoji: '🔗' },
+  { id: 'dashboard', label: 'Analytics',     icon: BarChart2,     emoji: '📊' },
+  { id: 'nav',       label: 'Navigation',    icon: Navigation,    emoji: '🧭' },
+  { id: 'hero',      label: 'Hero',          icon: Star,          emoji: '✨' },
+  { id: 'about',     label: 'About',         icon: User,          emoji: '👩' },
+  { id: 'work',      label: 'Work Projects', icon: Briefcase,     emoji: '💼' },
+  { id: 'media',     label: 'Media & Talks', icon: Video,         emoji: '🎬' },
+  { id: 'contact',   label: 'Contact',       icon: Phone,         emoji: '📱' },
+  { id: 'footer',    label: 'Footer',        icon: MessageSquare, emoji: '🔻' },
+  { id: 'socials',   label: 'Social Links',  icon: Link2,         emoji: '🔗' },
 ];
 const MULTILINE_KEYS = ['description', 'subtitle', 'mission', 'greeting', 'cta'];
 
 // ─── Rose gradient helpers ────────────────────────────────────────────────────
 const roseBtn = 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-md shadow-rose-200 border-0';
-const roseBtnSm = `${roseBtn} text-xs px-3 py-1.5 h-auto rounded-lg`;
-const roseOutline = 'border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300';
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 function LoginPage({ onLogin }: { onLogin: (pw: string) => void }) {
@@ -884,10 +882,255 @@ function SocialsPanel({ password }: { password: string }) {
   );
 }
 
+// ─── Analytics dashboard ──────────────────────────────────────────────────────
+interface AnalyticsData {
+  works: WorkItem[];
+  media: MediaItem[];
+  socials: SocialLink[];
+}
+
+function StatCard({ emoji, label, value, sub, gradient }: { emoji: string; label: string; value: number | string; sub: string; gradient: string }) {
+  return (
+    <div className={`relative rounded-2xl p-5 bg-gradient-to-br ${gradient} overflow-hidden`}>
+      <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
+      <div className="absolute -right-2 -bottom-6 w-20 h-20 rounded-full bg-white/10" />
+      <div className="relative">
+        <span className="text-3xl">{emoji}</span>
+        <p className="text-3xl font-bold text-white mt-2 leading-none">{value}</p>
+        <p className="text-white/90 font-semibold text-sm mt-1">{label}</p>
+        <p className="text-white/60 text-xs mt-0.5">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+function HealthRow({ label, ok, detail }: { label: string; ok: boolean; detail: string }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5 border-b border-rose-50 last:border-0">
+      {ok
+        ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+        : <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />}
+      <span className="text-sm font-medium text-rose-800 flex-1">{label}</span>
+      <span className="text-xs text-rose-400">{detail}</span>
+    </div>
+  );
+}
+
+function DashboardPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
+  const [data, setData] = useState<AnalyticsData>({ works: [], media: [], socials: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/admin/works').then((r) => r.json()),
+      fetch('/api/admin/media').then((r) => r.json()),
+      fetch('/api/admin/socials').then((r) => r.json()),
+    ]).then(([w, m, s]) => {
+      setData({ works: w.items || [], media: m.items || [], socials: s.items || [] });
+      setLoading(false);
+    });
+  }, []);
+
+  const videos   = data.media.filter((i) => i.type === 'video');
+  const articles = data.media.filter((i) => i.type === 'article');
+  const totalContent = data.works.length + data.media.length + data.socials.length;
+  const mediaTotal   = data.media.length || 1;
+  const videoPct     = Math.round((videos.length / mediaTotal) * 100);
+  const articlePct   = 100 - videoPct;
+
+  // Health checks
+  const worksWithImage    = data.works.filter((w) => w.imageUrl).length;
+  const worksWithLink     = data.works.filter((w) => w.link).length;
+  const worksFullTrans    = data.works.filter((w) => LOCALES.every((l) => w.translations[l]?.title)).length;
+  const mediaWithImage    = data.media.filter((m) => m.imageUrl).length;
+  const mediaFullTrans    = data.media.filter((m) => LOCALES.every((l) => m.translations[l])).length;
+
+  const QUICK_LINKS = [
+    { id: 'work',    emoji: '💼', label: 'Work Projects', count: data.works.length,   gradient: 'from-rose-400 to-pink-500' },
+    { id: 'media',   emoji: '🎬', label: 'Media & Talks', count: data.media.length,   gradient: 'from-pink-400 to-fuchsia-500' },
+    { id: 'socials', emoji: '🔗', label: 'Social Links',  count: data.socials.length, gradient: 'from-fuchsia-400 to-purple-500' },
+    { id: 'hero',    emoji: '✨', label: 'Hero Section',  count: null,                gradient: 'from-purple-400 to-indigo-500' },
+  ];
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-32 rounded-2xl bg-rose-100 animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {[1, 2].map((i) => <div key={i} className="h-48 rounded-2xl bg-rose-50 animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* ── Stat cards ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard emoji="💼" label="Work Projects"  value={data.works.length}   sub={`${worksWithLink} have live links`}      gradient="from-rose-400 to-pink-600" />
+        <StatCard emoji="🎬" label="Videos"         value={videos.length}       sub={`${articles.length} articles total`}     gradient="from-pink-400 to-fuchsia-600" />
+        <StatCard emoji="🔗" label="Social Links"   value={data.socials.length} sub="Follow My Journey links"                  gradient="from-fuchsia-400 to-purple-600" />
+        <StatCard emoji="🌏" label="Total Content"  value={totalContent}        sub="across 3 languages"                      gradient="from-purple-400 to-indigo-600" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* ── Media breakdown ─────────────────────────────────────────── */}
+        <div className="lg:col-span-1 rounded-2xl bg-white border border-rose-100 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-400 to-fuchsia-500 flex items-center justify-center">
+              <BarChart2 className="w-4 h-4 text-white" />
+            </div>
+            <p className="font-bold text-rose-800">Media Breakdown</p>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-rose-600">🎬 Videos</span>
+                <span className="text-rose-400">{videos.length} · {videoPct}%</span>
+              </div>
+              <div className="h-3 bg-rose-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-rose-400 to-pink-500 rounded-full transition-all duration-700" style={{ width: `${videoPct}%` }} />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-purple-600">📰 Articles</span>
+                <span className="text-rose-400">{articles.length} · {articlePct}%</span>
+              </div>
+              <div className="h-3 bg-rose-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-fuchsia-400 to-purple-500 rounded-full transition-all duration-700" style={{ width: `${articlePct}%` }} />
+              </div>
+            </div>
+            <div className="pt-2">
+              <div className="flex justify-between text-xs font-semibold mb-1">
+                <span className="text-rose-600">🖼️ With Images</span>
+                <span className="text-rose-400">{mediaWithImage}/{data.media.length}</span>
+              </div>
+              <div className="h-3 bg-rose-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all duration-700"
+                  style={{ width: data.media.length ? `${Math.round((mediaWithImage / data.media.length) * 100)}%` : '0%' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Translation coverage ─────────────────────────────────────── */}
+        <div className="lg:col-span-1 rounded-2xl bg-white border border-rose-100 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
+              <Layers className="w-4 h-4 text-white" />
+            </div>
+            <p className="font-bold text-rose-800">Translation Coverage</p>
+          </div>
+          <div className="space-y-3">
+            {LOCALES.map((l) => {
+              const worksDone  = data.works.filter((w) => w.translations[l]?.title).length;
+              const mediaDone  = data.media.filter((m) => m.translations[l]).length;
+              const total      = data.works.length + data.media.length || 1;
+              const done       = worksDone + mediaDone;
+              const pct        = Math.round((done / total) * 100);
+              return (
+                <div key={l}>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-rose-700">{LOCALE_FLAGS[l]} {l.toUpperCase()}</span>
+                    <span className="text-rose-400">{done}/{total} · {pct}%</span>
+                  </div>
+                  <div className="h-3 bg-rose-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-rose-400 to-pink-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-rose-50">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <span className="text-xs text-rose-600 font-medium">
+                {worksFullTrans}/{data.works.length} projects fully translated
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Portfolio health ─────────────────────────────────────────── */}
+        <div className="lg:col-span-1 rounded-2xl bg-white border border-rose-100 shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-white" />
+            </div>
+            <p className="font-bold text-rose-800">Portfolio Health</p>
+          </div>
+          <div>
+            <HealthRow label="Work images set"       ok={worksWithImage === data.works.length}   detail={`${worksWithImage}/${data.works.length}`} />
+            <HealthRow label="Work links set"        ok={worksWithLink === data.works.length}    detail={`${worksWithLink}/${data.works.length}`} />
+            <HealthRow label="Work fully translated" ok={worksFullTrans === data.works.length}   detail={`${worksFullTrans}/${data.works.length}`} />
+            <HealthRow label="Media images set"      ok={mediaWithImage === data.media.length}   detail={`${mediaWithImage}/${data.media.length}`} />
+            <HealthRow label="Media fully translated" ok={mediaFullTrans === data.media.length}  detail={`${mediaFullTrans}/${data.media.length}`} />
+            <HealthRow label="Social links added"    ok={data.socials.length > 0}                detail={`${data.socials.length} links`} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Quick nav cards ───────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <FileText className="w-3.5 h-3.5" /> Quick Access
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {QUICK_LINKS.map(({ id, emoji, label, count, gradient }) => (
+            <button key={id} onClick={() => onNavigate(id)}
+              className="group flex items-center gap-3 p-4 rounded-2xl bg-white border border-rose-100 hover:border-rose-200 hover:shadow-md hover:shadow-rose-100 transition-all text-left">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform`}>
+                <span className="text-lg">{emoji}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-rose-800 truncate">{label}</p>
+                {count !== null && <p className="text-xs text-rose-400">{count} items</p>}
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-rose-300 ml-auto shrink-0 group-hover:text-rose-500 transition-colors" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Recent work projects ─────────────────────────────────────── */}
+      {data.works.length > 0 && (
+        <div className="rounded-2xl bg-white border border-rose-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-rose-50">
+            <p className="font-bold text-rose-800">Work Projects</p>
+            <button onClick={() => onNavigate('work')}
+              className="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1">
+              Manage <ArrowUpRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="divide-y divide-rose-50">
+            {data.works.slice(0, 5).map((w) => (
+              <div key={w.key} className="flex items-center gap-4 px-5 py-3 hover:bg-rose-50/40 transition-colors">
+                <span className="text-xl shrink-0">{w.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-rose-800 truncate">{w.translations.en?.title || w.key}</p>
+                  <p className="text-xs text-rose-400 truncate">{w.link || 'No link set'}</p>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  {w.imageUrl  && <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500 text-xs">🖼</span>}
+                  {!w.imageUrl && <span className="w-5 h-5 rounded-full bg-amber-100  flex items-center justify-center text-amber-400  text-xs">!</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main dashboard ───────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [password, setPassword] = useState<string | null>(null);
-  const [active, setActive] = useState('hero');
+  const [active, setActive] = useState('dashboard');
   const [migrating, setMigrating] = useState(false);
 
   useEffect(() => {
@@ -984,6 +1227,7 @@ export default function AdminPage() {
 
         {/* Content */}
         <div className="p-8 max-w-4xl">
+          {active === 'dashboard' && <DashboardPanel onNavigate={setActive} />}
           {SIMPLE_SECTIONS.includes(active) && (
             <SectionPanel key={active} section={active} password={password} />
           )}
