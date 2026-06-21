@@ -38,17 +38,20 @@ async function readFromFile(locale: string): Promise<any> {
 }
 
 export async function readLocale(locale: string): Promise<any> {
-  if (!process.env.MONGODB_URI) return readFromFile(locale);
+  const fileData = await readFromFile(locale);
+  if (!process.env.MONGODB_URI) return fileData;
   try {
     const { getDb } = await import('./mongodb');
     const db = await getDb();
     const doc = await db.collection('locales').findOne({ locale });
-    if (doc?.data) return doc.data;
-    const seed = await readFromFile(locale);
-    await writeLocale(locale, seed).catch(() => {});
-    return seed;
+    if (doc?.data && Object.keys(doc.data).length > 0) {
+      // File is the base — missing sections in MongoDB always fall back to file values
+      return { ...fileData, ...doc.data };
+    }
+    await writeLocale(locale, fileData).catch(() => {});
+    return fileData;
   } catch {
-    return readFromFile(locale);
+    return fileData;
   }
 }
 
