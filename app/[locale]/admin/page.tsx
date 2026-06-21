@@ -18,6 +18,7 @@ import {
   TrendingUp, BarChart2, FileText, CheckCircle2, AlertCircle,
   ArrowUpRight, Activity, Layers, Upload, ExternalLink,
   Instagram, Facebook, Youtube, Twitter, Linkedin, Mail, Users,
+  Menu, X,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -258,7 +259,7 @@ function SectionPanel({ section, password }: { section: string; password: string
     <div className="space-y-4">
       {/* Overview card */}
       <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-md shadow-rose-200">
               <Globe className="w-5 h-5 text-white" />
@@ -286,16 +287,13 @@ function SectionPanel({ section, password }: { section: string; password: string
                 <span className="text-sm text-rose-900 truncate">{String(v)}</span>
               </div>
             ))}
-            {Object.keys(data).length > 3 && (
-              <p className="text-xs text-rose-400 text-center pt-1">+{Object.keys(data).length - 3} more fields — click Edit to see all</p>
-            )}
           </div>
         )}
       </div>
 
       {/* Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-xl overflow-hidden p-0">
+        <DialogContent className="max-w-full sm:max-w-xl overflow-hidden p-0">
           <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-white text-lg font-bold capitalize flex items-center gap-2">
@@ -359,8 +357,8 @@ function WorkForm({ initial, onSave, onClose, password }: { initial: WorkItem; o
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5 max-h-[65vh] overflow-y-auto px-1">
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={submit} className="space-y-5 max-h-[70vh] overflow-y-auto px-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest">Key *</Label>
           <Input value={item.key} onChange={(e) => set('key', e.target.value)} placeholder="himeberry" required
@@ -493,7 +491,7 @@ function WorkPanel({ password }: { password: string }) {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg overflow-hidden p-0">
+        <DialogContent className="max-w-full sm:max-w-lg overflow-hidden p-0">
           <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
@@ -519,7 +517,7 @@ function WorkPanel({ password }: { password: string }) {
           <p className="text-rose-400 text-sm mt-1">Click "Add Project" or "Seed from files" to get started</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-rose-100 overflow-hidden shadow-sm shadow-rose-100">
+        <div className="rounded-2xl border border-rose-100 overflow-x-auto shadow-sm shadow-rose-100">
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
@@ -596,8 +594,8 @@ function MediaForm({ initial, onSave, onClose, password }: { initial: MediaItem;
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5 max-h-[65vh] overflow-y-auto px-1">
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={submit} className="space-y-5 max-h-[70vh] overflow-y-auto px-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest">Key *</Label>
           <Input value={item.key} onChange={(e) => set('key', e.target.value)} placeholder="tedx" required
@@ -718,7 +716,7 @@ function MediaPanel({ password }: { password: string }) {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg overflow-hidden p-0">
+        <DialogContent className="max-w-full sm:max-w-lg overflow-hidden p-0">
           <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
@@ -744,7 +742,7 @@ function MediaPanel({ password }: { password: string }) {
           <p className="text-rose-400 text-sm mt-1">Click "Seed from files" to import all items</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-rose-100 overflow-hidden shadow-sm shadow-rose-100">
+        <div className="rounded-2xl border border-rose-100 overflow-x-auto shadow-sm shadow-rose-100">
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
@@ -817,7 +815,7 @@ function SocialForm({ initial, onSave, onClose }: { initial: SocialLink; onSave:
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-rose-700 uppercase tracking-widest">Key *</Label>
           <Input value={item.key} onChange={(e) => set('key', e.target.value)} placeholder="instagram" required
@@ -935,7 +933,7 @@ function SocialsPanel({ password }: { password: string }) {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md overflow-hidden p-0">
+        <DialogContent className="max-w-full sm:max-w-md overflow-hidden p-0">
           <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-4">
             <DialogHeader>
               <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
@@ -1079,7 +1077,7 @@ function DashboardPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
   return (
     <div className="space-y-6">
       {/* ── Stat cards ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         <StatCard emoji="💼" label="Work Projects"  value={data.works.length}   sub={`${worksWithLink} have live links`}      gradient="from-rose-400 to-pink-600" />
         <StatCard emoji="🎬" label="Videos"         value={videos.length}       sub={`${articles.length} articles total`}     gradient="from-pink-400 to-fuchsia-600" />
         <StatCard emoji="🔗" label="Social Links"   value={data.socials.length} sub="Follow My Journey links"                  gradient="from-fuchsia-400 to-purple-600" />
@@ -1190,7 +1188,7 @@ function DashboardPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
         <p className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
           <FileText className="w-3.5 h-3.5" /> Quick Access
         </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {QUICK_LINKS.map(({ id, emoji, label, count, gradient }) => (
             <button key={id} onClick={() => onNavigate(id)}
               className="group flex items-center gap-3 p-4 rounded-2xl bg-white border border-rose-100 hover:border-rose-200 hover:shadow-md hover:shadow-rose-100 transition-all text-left">
@@ -1264,26 +1262,49 @@ export default function AdminPage() {
 
   function logout() { sessionStorage.removeItem('admin_pw'); setPassword(null); }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (!password) return <LoginPage onLogin={setPassword} />;
 
   const activeNav = NAV_ITEMS.find((n) => n.id === active)!;
   const SIMPLE_SECTIONS = ['nav', 'hero', 'about', 'contact', 'footer'];
 
+  function navigate(id: string) {
+    setActive(id);
+    setSidebarOpen(false);
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50/40 to-white">
+
+      {/* ── Mobile overlay ──────────────────────────────────────────────────── */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <aside className="w-60 flex flex-col shrink-0 bg-gradient-to-b from-rose-600 via-rose-500 to-pink-600 shadow-2xl shadow-rose-900/30">
-        {/* Logo */}
-        <div className="px-5 py-6">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 flex flex-col shrink-0
+        bg-gradient-to-b from-rose-600 via-rose-500 to-pink-600 shadow-2xl shadow-rose-900/30
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:relative md:w-60 md:translate-x-0 md:z-auto
+      `}>
+        {/* Logo + mobile close */}
+        <div className="px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-inner shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
               <p className="text-white font-bold text-sm leading-none">Admin CMS</p>
               <p className="text-rose-200 text-xs mt-0.5">Nanami Portfolio</p>
             </div>
           </div>
+          <button onClick={() => setSidebarOpen(false)}
+            className="md:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="h-px bg-white/10 mx-4" />
@@ -1291,7 +1312,7 @@ export default function AdminPage() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map(({ id, label, emoji }) => (
-            <button key={id} onClick={() => setActive(id)}
+            <button key={id} onClick={() => navigate(id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 active === id
                   ? 'bg-white text-rose-600 shadow-lg shadow-rose-900/20 font-semibold'
@@ -1311,7 +1332,7 @@ export default function AdminPage() {
           <button onClick={migrate} disabled={migrating}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition-all disabled:opacity-60">
             <Database className="w-4 h-4 shrink-0" />
-            {migrating ? 'Seeding database…' : 'Seed from files'}
+            {migrating ? 'Seeding…' : 'Seed from files'}
           </button>
           <button onClick={logout}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-all">
@@ -1322,23 +1343,28 @@ export default function AdminPage() {
       </aside>
 
       {/* ── Main ────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto min-w-0">
         {/* Sticky header */}
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-rose-100 px-8 py-4 flex items-center gap-4">
-          <span className="text-2xl">{activeNav.emoji}</span>
-          <div>
-            <h1 className="text-base font-bold text-rose-800">{activeNav.label}</h1>
-            <p className="text-xs text-rose-400">Manage {activeNav.label.toLowerCase()} content</p>
+        <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-rose-100 px-4 md:px-8 py-3 md:py-4 flex items-center gap-3">
+          {/* Hamburger — mobile only */}
+          <button onClick={() => setSidebarOpen(true)}
+            className="md:hidden p-2 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-md shadow-rose-200 shrink-0">
+            <Menu className="w-4 h-4" />
+          </button>
+          <span className="text-xl md:text-2xl">{activeNav.emoji}</span>
+          <div className="min-w-0">
+            <h1 className="text-sm md:text-base font-bold text-rose-800 truncate">{activeNav.label}</h1>
+            <p className="text-xs text-rose-400 hidden sm:block">Manage {activeNav.label.toLowerCase()} content</p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-rose-400 font-medium">Live</span>
+            <span className="text-xs text-rose-400 font-medium hidden sm:block">Live</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-8 w-full">
-          {active === 'dashboard' && <DashboardPanel onNavigate={setActive} />}
+        <div className="p-4 md:p-8 w-full">
+          {active === 'dashboard' && <DashboardPanel onNavigate={navigate} />}
           {SIMPLE_SECTIONS.includes(active) && (
             <SectionPanel key={active} section={active} password={password} />
           )}
