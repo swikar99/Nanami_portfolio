@@ -521,37 +521,66 @@ function WorkPanel({ password }: { password: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-14">#</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-14">Image</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key / Order</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Title (EN)</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Style</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇬🇧 EN Title</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇯🇵 JA Title</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇳🇵 NE Title</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Description</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Color</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Link</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Video</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item, i) => (
                 <TableRow key={item.key} className={`border-rose-50 hover:bg-rose-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-rose-50/20'}`}>
+                  <TableCell className="text-xs text-rose-400 font-mono">#{item.order}</TableCell>
                   <TableCell>
                     {item.imageUrl
                       ? <img src={item.imageUrl} alt={item.key} className="w-10 h-10 rounded-lg object-cover border border-rose-100" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                       : <span className="text-2xl">{item.icon}</span>}
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
-                      <p className="text-xs text-rose-400 mt-0.5">#{item.order}</p>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg w-fit">{item.key}</span>
+                      <span className="text-xs text-rose-400">{item.icon} {item.imageName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-semibold text-rose-900">{item.translations.en?.title}</TableCell>
-                  <TableCell className="text-xs text-rose-500 max-w-[160px]">
-                    <p className="truncate">{item.color}</p>
-                    {item.videoUrl && <span className="text-purple-400">🎥 Has video</span>}
+                  <TableCell className="font-semibold text-rose-900 max-w-[140px]">
+                    <p className="truncate">{item.translations.en?.title || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="text-rose-700 max-w-[140px]">
+                    <p className="truncate text-sm">{item.translations.ja?.title || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="text-rose-700 max-w-[140px]">
+                    <p className="truncate text-sm">{item.translations.ne?.title || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="text-xs text-rose-600 max-w-[180px]">
+                    <p className="line-clamp-2">{item.translations.en?.description || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="max-w-[120px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${item.color} shrink-0`} />
+                      <span className="text-xs text-rose-400 truncate">{item.color}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {item.link
                       ? <a href={item.link} target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[150px] block">{item.link}</a>
+                          className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[130px] block">
+                          {item.link.replace(/^https?:\/\//, '')}
+                        </a>
+                      : <span className="text-rose-300 text-xs">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {item.videoUrl
+                      ? <a href={item.videoUrl} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 hover:underline">
+                          🎥 Video
+                        </a>
                       : <span className="text-rose-300 text-xs">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
@@ -746,9 +775,13 @@ function MediaPanel({ password }: { password: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-10">#</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-16">Thumb</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key / Order</TableHead>
-                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Label (EN)</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Type</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇬🇧 EN Label</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇯🇵 JA Label</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">🇳🇵 NE Label</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">URL</TableHead>
                 <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider text-right">Actions</TableHead>
               </TableRow>
@@ -756,23 +789,37 @@ function MediaPanel({ password }: { password: string }) {
             <TableBody>
               {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item, i) => (
                 <TableRow key={item.key} className={`border-rose-50 hover:bg-rose-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-rose-50/20'}`}>
+                  <TableCell className="text-xs text-rose-400 font-mono">#{item.order}</TableCell>
                   <TableCell>
                     {item.imageUrl
                       ? <img src={item.imageUrl} alt={item.key} className="w-14 h-10 rounded-lg object-cover border border-rose-100" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      : <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${item.type === 'video' ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white' : 'bg-gradient-to-r from-purple-400 to-indigo-400 text-white'}`}>
-                          {item.type === 'video' ? '🎬' : '📰'} {item.type}
-                        </span>}
+                      : <span className="text-2xl">{item.thumbnail || (item.type === 'video' ? '🎬' : '📰')}</span>}
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
-                      <p className="text-xs text-rose-400 mt-0.5">#{item.order} · {item.type}</p>
+                    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${item.type === 'video' ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white' : 'bg-gradient-to-r from-purple-400 to-indigo-400 text-white'}`}>
+                      {item.type === 'video' ? '🎬' : '📰'} {item.type}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg w-fit">{item.key}</span>
+                      {item.imageName && <span className="text-xs text-rose-400">{item.imageName}</span>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-rose-900 max-w-[200px] truncate">{item.translations.en}</TableCell>
+                  <TableCell className="text-sm text-rose-900 max-w-[160px]">
+                    <p className="truncate">{item.translations.en || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="text-sm text-rose-700 max-w-[160px]">
+                    <p className="truncate">{item.translations.ja || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
+                  <TableCell className="text-sm text-rose-700 max-w-[160px]">
+                    <p className="truncate">{item.translations.ne || <span className="text-rose-300">—</span>}</p>
+                  </TableCell>
                   <TableCell>
                     <a href={item.url} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[150px] block">{item.url}</a>
+                      className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[150px] block">
+                      {item.url.replace(/^https?:\/\//, '')}
+                    </a>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1.5">
@@ -959,31 +1006,62 @@ function SocialsPanel({ password }: { password: string }) {
           <p className="text-rose-400 text-sm mt-1">Click "Seed from files" to import</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item) => (
-            <div key={item.key} className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-rose-100 shadow-sm hover:shadow-md hover:shadow-rose-100 transition-all">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-md shadow-rose-200/50 shrink-0 text-white`}>
-                {SOCIAL_ICON_MAP[item.icon] ?? <Link2 className="w-5 h-5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-rose-800">{item.name}</p>
-                  <span className="text-xs font-mono bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded">{item.icon}</span>
-                </div>
-                <a href={item.url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-rose-400 hover:text-rose-600 hover:underline truncate block mt-0.5">{item.url}</a>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} opacity-40`} title={item.gradient} />
-                <button onClick={() => openEdit(item)} className="p-2 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => remove(item.key)} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="rounded-2xl border border-rose-100 overflow-x-auto shadow-sm shadow-rose-100">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gradient-to-r from-rose-50 to-pink-50 border-rose-100 hover:bg-rose-50">
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-10">#</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider w-16">Icon</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Name</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Key</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Icon Name</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">URL</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider">Gradient</TableHead>
+                <TableHead className="text-rose-600 font-bold text-xs uppercase tracking-wider text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((item, i) => (
+                <TableRow key={item.key} className={`border-rose-50 hover:bg-rose-50/50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-rose-50/20'}`}>
+                  <TableCell className="text-xs text-rose-400 font-mono">#{item.order}</TableCell>
+                  <TableCell>
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-white shadow-sm`}>
+                      {SOCIAL_ICON_MAP[item.icon] ?? <Link2 className="w-4 h-4" />}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-semibold text-rose-900">{item.name}</TableCell>
+                  <TableCell>
+                    <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2 py-0.5 rounded-lg">{item.key}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs bg-rose-50 text-rose-500 px-2 py-0.5 rounded border border-rose-100">{item.icon}</span>
+                  </TableCell>
+                  <TableCell>
+                    <a href={item.url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-rose-500 hover:text-rose-700 hover:underline truncate max-w-[180px] block">
+                      {item.url.replace(/^https?:\/\//, '')}
+                    </a>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-6 rounded-md bg-gradient-to-r ${item.gradient} shrink-0`} />
+                      <span className="text-xs text-rose-400 truncate max-w-[140px]">{item.gradient}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1.5">
+                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-600 transition-colors">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => remove(item.key)} className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-500 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           <Pagination page={page} total={items.length} onChange={setPage} />
         </div>
       )}
